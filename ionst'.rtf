@@ -1,0 +1,78 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
+{\fonttbl\f0\fnil\fcharset0 LucidaSans;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green102\blue0;\red0\green0\blue178;
+\red128\green0\blue0;\red178\green0\blue178;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf2 \
+\cf3 /* Not used\
+	s = Server.internal.boot;\
+	p = DualEnvir.all;\
+*/\cf2 \
+\
+ \cf3 // Execute one time\cf2 \
+(\
+	\cf4 DualEnvir\cf2 .new(s, \cf5 \\click\cf2 );\
+	p[\cf5 \\click\cf2 ].push;\
+)\
+\
+\
+(\
+	\cf4 SynthDef\cf2 (\cf5 \\click\cf2 , \{\
+		\cf4 | out=0, amp=0.5, repeats=0.1, freq=0, tail=0.1 |\cf2 \
+		\cf4 var\cf2  trueDur, sig, delays, klankSet;\
+		\
+		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
+		\cf3 // source\cf2 \
+		trueDur = ( (\cf6 1\cf2 /freq)*repeats ).max(\cf6 0.1\cf2 );\
+		sig = amp * \cf6 10 \cf2 * \cf4 Impulse\cf2 .ar(freq) * \cf4 Trig\cf2 .ar(\cf6 1\cf2 , trueDur  );\
+		sig = sig \
+			+ \cf4 LPF\cf2 .ar( sig*\cf6 30\cf2 , \cf6 50\cf2 )\
+			+ \cf4 LPF\cf2 .ar( sig*\cf6 15\cf2 , \cf6 8000\cf2 );\
+			\
+		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
+		\cf3 // comb\cf2 \
+		delays = [\cf6 6\cf2 ,\cf6 9\cf2 ,\cf6 12\cf2 ,\cf6 18\cf2 ].nthPrime.reciprocal * \cf6 3\cf2 ;\
+		sig = sig + (\cf6 0.01\cf2 *\cf4 CombC\cf2 .ar( sig, \cf6 0.5\cf2 , delays, tail )).sum;\
+		\
+		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
+		\cf3 // klank\cf2 \
+		klankSet = \
+		`[	[ \cf6 3\cf2 , 		\cf6 5\cf2 , 		\cf6 7\cf2 , 		\cf6 8\cf2 , 		\cf6 7.1\cf2 	]*\cf6 13\cf2 ,\
+			[ \cf6 0.3\cf2 ,	\cf6 0.3\cf2 ,		\cf6 0.4\cf2 ,		\cf6 0.001\cf2 ,	\cf6 0.001\cf2 ],\
+			[ \cf6 0.5\cf2 ,	 \cf6 0.3\cf2 ,	\cf6 0.2\cf2 ,		\cf6 10.5\cf2 ,	\cf6 10\cf2 	] ];\
+		sig = \cf4 DynKlank\cf2 .ar( klankSet.postln, sig, decayscale:\cf6 2 \cf2 );\
+		\cf4 DetectSilence\cf2 .ar( sig, doneAction:\cf6 2 \cf2 );\
+		sig = sig.tanh;\
+		\cf4 Out\cf2 .ar( out, sig );\
+	\}).add;\
+)\
+\
+~b_1 = \cf4 Buffer\cf2 .alloc( s, \cf6 513\cf2 );\
+~s_1 = \cf4 Signal\cf2 .newClear( \cf6 513 \cf2 );\
+\
+w = \cf4 SCWindow\cf2 .new.front;\
+e = \cf4 SCEnvelopeEdit\cf2 ( w, w.view.bounds.moveTo(\cf6 0\cf2 ,\cf6 0\cf2 ), \cf4 Env\cf2 ([\cf6 0\cf2 ,\cf6 1\cf2 ],[\cf6 1\cf2 ]))\
+	.resize_(\cf6 5\cf2 );\
+\
+~tail = \{ \cf4 SinOsc\cf2 .kr(\cf6 0.05\cf2 ).range(\cf6 0.0\cf2 ,\cf6 4\cf2 ) \};\
+~tail.debugScope\
+\
+~a = \cf4 Pbind\cf2 (\
+	\cf5 \\instrument\cf2 , \cf5 \\click\cf2 ,\
+	\cf5 \\dur\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 0.35\cf2 , 	\cf6 0.35\cf2 , 	\cf6 0.35\cf2 , 	\cf6 2\cf2 	], \cf4 inf\cf2 ),\
+	\cf5 \\amp\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 0.05\cf2 , 	\cf6 0.05\cf2 , 	\cf6 0.25\cf2 , 	\cf6 0.75\cf2 ], \cf4 inf\cf2 ),\
+	\cf5 \\freq\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 1\cf2 ,	\cf4 Pseq\cf2 ([\cf6 30\cf2 ],\cf6 1\cf2 ),		\cf6 0\cf2 ,		\cf6 0 \cf2 ], \cf4 inf\cf2 ),\
+	\cf5 \\repeats\cf2 ,	\cf4 Pseq\cf2 ([	\cf6 1\cf2 ,		\cf6 3\cf2 ,		\cf6 1\cf2 ,		\cf6 1\cf2 	], \cf4 inf\cf2 ),\
+	\cf5 \\tail\cf2 , ~tail\
+)\
+~a.stop;\
+\
+~klank1 = \{\
+	\
+\}\
+\
+~b = \{\
+	~a.ar !\cf6 2\cf2 ;\
+\};\
+~b.play;}

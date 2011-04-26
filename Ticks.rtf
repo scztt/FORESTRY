@@ -1,0 +1,91 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
+{\fonttbl\f0\fnil\fcharset0 BitstreamVeraSans-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green102\blue0;\red0\green0\blue179;\red128\green0\blue0;
+\red102\green0\blue102;\red179\green0\blue179;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\f0\fs26 \cf2 /* Not used\
+	s = Server.internal.boot;\
+	p = DualEnvir.all;\
+*/\cf0 \
+\
+ \cf2 // Execute one time\cf0 \
+(\
+	\cf3 DualEnvir\cf0 .new(s, \cf4 \\tick\cf0 );\
+	p[\cf4 \\tick\cf0 ].push;\
+)\
+\
+p = 
+\fs24 \cf3 SpearWeightedPartials\cf0 .fromFiles( \cf5 "/Users/scott/Desktop/dirty-vox-1.txt"\cf0  );
+\fs26 \
+
+\fs24 f = p.getFreqsForTimeRange(\cf6 0\cf0 ,\cf6 1.9\cf0 );\
+\
+
+\fs26 fork \{\
+	\cf6 120\cf0 .do(\{\
+		\cf3 | i |\cf0 \
+		\cf3 var\cf0  norm;\
+		norm = (i+1)/\cf6 2000\cf0 ;\
+		i.postln;\
+		n = \{\
+			\cf3 | dcFreq = 26, dur=18 |\cf0 \
+			\cf3 var\cf0  env, sig, dust, dist, panSeed, pan, iatd, vibrato;\
+			iatd = 
+\fs20 \cf6 0.00058823529411765\cf0 ;
+\fs26 \
+			dust = \cf3 CombC\cf0 .ar( \cf3 Dust\cf0 .ar(\cf6 300\cf0 ), \cf6 0.5\cf0 , \cf6 1\cf0 /[dcFreq, dcFreq*\cf6 0.023\cf0 ], \cf6 30 \cf0 );\
+			dust = dust.sum;\
+			sig = (\cf3 WhiteNoise\cf0 .ar() ** \cf6 2\cf0 ) * (\cf6 0.03\cf0 +dust);\
+			sig = sig;\
+			sig = \cf3 Mirror\cf0 .ar( sig, \cf6 -0.5\cf0 , \cf6 0.5\cf0 );\
+			sig = sig + \cf3 Impulse\cf0 .ar(\cf6 0\cf0 , \cf6 0\cf0 , \cf6 1\cf0 );\
+			sig = \cf3 Compander\cf0 .ar( sig, sig, \cf6 0.001\cf0 , \cf6 10\cf0 , \cf6 1\cf0 /\cf6 3000\cf0 , \cf6 0.03\cf0 , \cf6 10 \cf0 );\
+			sig = \cf3 BLowShelf\cf0 .ar( sig, \cf6 3054\cf0 , \cf6 0.8\cf0 , \cf6 -20 \cf0 );\
+			sig = \cf3 BPeakEQ\cf0 .ar( sig, 
+\fs20 \cf6 15974
+\fs26 \cf0 , \cf6 3\cf0 , \cf6 8.25 \cf0 );\
+			sig = \cf3 BPeakEQ\cf0 .ar( sig, 
+\fs20 \cf6 3786
+\fs26 \cf0 , \cf6 1\cf0 , \cf6 6.25 \cf0 );\
+			vibrato = \cf3 SinOsc\cf0 .ar(\cf6 norm*4\cf0 ).range(\cf6 -32\cf0 ,\cf6 32\cf0 ) * \cf3 WhiteNoise\cf0 .ar();\
+			sig = sig + (\cf3 Klank\cf0 .ar(`[\
+					f[\cf6 0\cf0 ][\cf6 0\cf0 ..\cf6 30\cf0 ],\
+					f[\cf6 1\cf0 ][\cf6 0\cf0 ..\cf6 30\cf0 ],\
+					\cf6 20 \cf0 ! \cf6 30\cf0 \
+				], sig, \
+				freqscale: ([ \cf6 1\cf0 , \cf6 2\cf0 , \cf6 1\cf0 , \cf6 2\cf0 , \cf6 1\cf0 , \cf6 1\cf0 , \cf6 3\cf0 /\cf6 2\cf0 , \cf6 7\cf0 /\cf6 3\cf0 , \cf6 8\cf0 /\cf6 3\cf0 , \cf6 12\cf0 /\cf6 5, 17/3 \cf0 ]/\cf6 4\cf0 ).choose,  \
+				freqoffset: (norm*20)*(vibrato + \cf3 Rand\cf0 (\cf6 -20\cf0 , \cf6 20\cf0 ))\
+			) * \cf6 0.1\cf0 );\
+			sig = sig + \cf3 Impulse\cf0 .ar(\cf6 0\cf0 , \cf6 0\cf0 , \cf6 1\cf0 );\
+			env = \cf3 EnvGen\cf0 .kr( \
+				\cf3 Env\cf0 ([\cf6 1\cf0 ,\cf6 1\cf0 ,\cf6 0\cf0 ],[\cf6 0.8\cf0 ,\cf6 0.2\cf0 ]), \
+				timeScale:dur, \
+				doneAction:\cf6 2 \cf0 \
+			);\
+			sig = sig*env;\
+			dist = \cf3 Line\cf0 .kr( \cf3 Rand\cf0 (\cf6 3\cf0 ,\cf6 10\cf0 ), \cf6 14\cf0 , dur );\
+			sig = \cf3 DistAttenuate\cf0 .ar(sig, dist);\
+			panSeed = \cf3 Rand\cf0 (\cf6 -0.7\cf0 ,\cf6 0.7\cf0 );\
+			pan = \cf3 Line\cf0 .kr( panSeed, panSeed.sign, dur );\
+			sig = \cf3 Pan2\cf0 .ar( sig, pan, \cf6 1000 \cf0 );\
+			sig = [ \
+				\cf3 DelayC\cf0 .ar(sig[\cf6 0\cf0 ], \cf6 0.1\cf0 , iatd*(pan.max(\cf6 0\cf0 )) ),\
+				\cf3 DelayC\cf0 .ar(sig[\cf6 1\cf0 ], \cf6 0.1\cf0 , iatd*(pan.min(\cf6 0\cf0 ).abs) )\
+			];\
+		\}.play;\
+		([\cf6 0.1\cf0 , \cf6 0.1\cf0 , \cf6 0.2\cf0 , \cf6 0.2\cf0 ,\cf6 0.3\cf0 , \cf6 0.3\cf0 , \cf6 0.05\cf0 , \cf6 0.2\cf0 , \cf6 0.3\cf0 , \cf6 0.6\cf0 , \cf6 2\cf0 ]*(5-(norm*4))).choose.wait;\
+	\})\
+\}\
+\pard\pardeftab720\ql\qnatural
+\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+\cf0 n.set( \cf4 \\dcFreq\cf0 , \cf6 40 \cf0 )\
+\
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+
+\fs20 \cf0 m = \cf3 MasterEQ\cf0 (\cf6 4\cf0 );\
+~pres = m.eq[\cf4 \\
+\fs26 frpresets
+\fs20 \cf0 ][\cf6 7\cf0 ]\
+s.}
