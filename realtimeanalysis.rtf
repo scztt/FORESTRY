@@ -1,0 +1,53 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
+{\fonttbl\f0\fnil\fcharset0 BitstreamVeraSans-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red179\green0\blue179;\red0\green0\blue179;
+\red102\green0\blue102;\red0\green102\blue0;}
+\deftab560
+\pard\pardeftab560\ql\qnatural
+
+\f0\fs24 \cf2 ~size = \cf3 2\cf2 **\cf3 13\cf2 ;\
+~analyzedFFTBuf = \cf4 Buffer\cf2 .alloc(s, ~size);\
+~analyzedFFTBuf.loadToFloatArray(action:\{\
+	\cf4 | coll |\cf2 \
+	~coll = coll;\
+	\{\
+		\cf4 List\cf2 .newFrom(coll[\cf3 2\cf2 ..]).clump(\cf3 2\cf2 ).postln.plot2;\
+	\}.defer\
+\});\
+~analyzedFFTBuf.clear;\
+\
+b = \cf4 Buffer\cf2 .read(s, \cf5 "/Users/scott/Documents/_sounds/g1.wav"\cf2 );\
+\
+~click = \{\
+	\cf4 | fftbuf |\cf2 \
+	\cf4 var\cf2  click, freq, sweep, fft, fft2, zfft, inSig, numSamples, phasor;\
+	fftbuf = ~analyzedFFTBuf.bufnum;\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+\cf2 	numSamples = (\cf4 BufSamples\cf2 .kr(fftbuf) - \cf3 2\cf2 ) * \cf3 0.5\cf2 ; \cf6 // 1023 (bufsize=2048)\cf2 \
+	\
+\pard\pardeftab560\ql\qnatural
+\cf2 	click = \cf4 Impulse\cf2 .ar( (~size/\cf4 SampleRate\cf2 .ir).reciprocal, \cf3 0.5 \cf2 );\
+	\cf4 Out\cf2 .ar( \cf3 10\cf2 , click );\
+	\
+	freq = \cf4 Phasor\cf2 .ar(click, \cf3 22050\cf2 /~size, \cf3 0\cf2 , \cf3 22050\cf2 );\
+	sweep = \cf4 LFPulse\cf2 .ar(freq, \cf3 0\cf2 , \cf4 MouseX\cf2 .kr(\cf3 0\cf2 ,\cf3 1\cf2 ));\
+	\cf6 //sweep = click;\cf2 \
+	\cf4 Out\cf2 .ar(\cf3 11\cf2 , sweep);\
+	\
+	zfft = \cf4 FFT\cf2 ( \cf4 LocalBuf\cf2 (~size), \cf4 DC\cf2 .ar(\cf3 0\cf2 ) );\
+	fft = \cf4 FFT\cf2 ( ~analyzedFFTBuf.bufnum, sweep, hop:\cf3 1/64\cf2 , wintype:\cf3 -1 \cf2 );\
+	fft = \cf4 PV_CopyPhase\cf2 ( fft, zfft);\
+	fft = \cf4 PV_MagSmear\cf2 (fft, \cf3 8\cf2 );\
+	\
+	inSig = \cf4 PlayBuf\cf2 .ar(\cf3 1\cf2 , b.bufnum, loop:\cf3 1\cf2 );\
+	\
+	fft2 = \cf4 FFT\cf2 ( \cf4 LocalBuf\cf2 (~size), inSig );\
+	\
+	fft2 = \cf4 PV_MagMul\cf2 ( fft, fft2 );\
+	\
+	\cf4 Out\cf2 .ar(\cf3 0\cf2 , \cf4 IFFT\cf2 (fft2));\
+	\cf6 //Out.ar(0, sweep);\cf2 \
+\}.play\
+\
+\
+}

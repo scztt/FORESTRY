@@ -1,0 +1,83 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
+{\fonttbl\f0\fnil\fcharset0 Monaco;\f1\fnil\fcharset0 BitstreamVeraSans-Roman;\f2\fnil\fcharset0 Verdana;
+}
+{\colortbl;\red255\green255\blue255;\red0\green102\blue0;\red0\green0\blue179;\red128\green0\blue0;
+\red102\green0\blue102;\red179\green0\blue179;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\qc\pardirnatural
+
+\f0\fs30 \cf2 // . . . F O R E S T R Y . . . //\cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\f1\fs26 \cf2 /* Not used\
+	s = Server.internal.boot;\
+	p = DualEnvir.all;\
+*/\cf0 \
+\
+ \cf2 // Execute one time\cf0 \
+(\
+	\cf3 DualEnvir\cf0 .new(s, \cf4 \\cantler\cf0 );\
+	p[\cf4 \\cantler\cf0 ].linkDoc;\
+)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\f2\fs28 \cf0 ~b_1 = \cf3 Buffer\cf0 .read(s, \cf5 "/Users/scott/Documents/_sounds/melodica/1.wav"\cf0 );\
+~b_2 = \cf3 Buffer\cf0 .read(s, "/Users/scott/Documents/_sounds/stereo1/under.AIF");\
+\
+~k_org = \cf3 KorgControl\cf0 (s, \cf4 \\canter\cf0 );\
+~k_org.start;\
+~k_org.debugScope;\
+\
+~k_org.setLag(\cf4 \\knob1\cf0 , \cf6 3\cf0 );\
+~k_org.setSpec(\cf4 \\knob2\cf0 , [\cf6 2\cf0 ,\cf6 100\cf0 ]);\
+~k_org.setSpec(\cf4 \\knob3\cf0 , [\cf6 0\cf0 ,\cf6 20\cf0 ]);\
+\
+(\
+~sig = \{\
+	\cf3 | pos=0.5, freq=80, offset=3 |\cf0 \
+	\cf3 var\cf0  highSig, sig;\
+	\
+	sig = \cf3 Warp1\cf0 .ar( \cf6 1\cf0 , ~b_2.bufnum, pos, \
+		freqScale: \cf6 0.01\cf0 ,\
+		windowSize: (\cf6 1\cf0 /\cf6 265\cf0 )*\cf6 32\cf0 ,\
+		overlaps: \cf6 32\cf0 ,\
+		windowRandRatio: \cf6 0.2\cf0 ,\
+		interp: \cf6 2\cf0 \
+	);\
+	sig = \cf3 DynKlank\cf0 .ar( `[\
+			[ \cf6 1\cf0 , 	\cf6 1.12\cf0 , 	\cf6 1.34\cf0 , 	\cf6 1.765\cf0 , 	\cf6 2.12 \cf0 ],\
+			[ \cf6 1\cf0 ,		\cf6 0.7\cf0 ,	\cf6 0.6\cf0 ,	\cf6 0.3\cf0 ,	\cf6 0.1 \cf0 ],\
+			[ \cf6 2\cf0 ,		\cf6 4\cf0 ,		\cf6 2\cf0 ,		\cf6 1\cf0 ,		\cf6 0.7 \cf0 ]],\
+		sig,\
+		freqscale: freq * [\cf6 0.93\cf0 , \cf6 0.72\cf0 , \cf6 1\cf0 , \cf6 1.342\cf0 , \cf6 1.123\cf0 , \cf6 1.346\cf0 ],\
+		freqoffset: offset,\
+		decayscale: \cf6 1\cf0 \
+	).sum;\
+	\
+	highSig = \cf3 LagUD\cf0 .ar(\cf3 HPF\cf0 .ar(\cf3 LeakDC\cf0 .ar(sig), \cf6 1800\cf0 ), \cf6 0\cf0 , \cf6 0.01\cf0 ) \
+		* (\cf6 1 \cf0 + \cf3 WhiteNoise\cf0 .ar(\cf6 0.5\cf0 ));\
+	highSig = highSig + (\cf6 0.7 \cf0 * \cf3 Mix\cf0 ( [\cf6 1\cf0 ,\cf6 4\cf0 /\cf6 3\cf0 , \cf6 5\cf0 /\cf6 3\cf0 , \cf6 7\cf0 /\cf6 4\cf0 , \cf6 5\cf0 /\cf6 4\cf0 ].collect(\{\
+		\cf3 | int |\cf0 \
+		int = int * \cf6 440\cf0 ;\
+		\cf3 CombC\cf0 .ar( highSig, int.reciprocal, int.reciprocal, \cf6 0.25 \cf0 );\
+	\})));\
+	highSig = \cf3 FreeVerb\cf0 .ar( highSig, \cf6 0.8\cf0 , \cf6 0.9\cf0 , \cf6 0.6 \cf0 );\
+	sig = sig + highSig;\
+	sig = \cf3 Compander\cf0 .ar( sig, sig, \cf6 0.8\cf0 , \cf6 1\cf0 , \cf6 0.1 \cf0 );\
+	\cf3 LeakDC\cf0 .ar(sig * [\cf6 0.4\cf0 ,\cf6 0.4\cf0 ]);\
+\};\
+)\
+\
+~sig.stop\
+~sig.scope;\
+~sig.lag(\cf4 \\freq\cf0 , \cf6 6\cf0 , \cf4 \\pos\cf0 , \cf6 6\cf0 , \cf4 \\offset\cf0 , \cf6 0.2\cf0 );\
+\
+~sig.map( \cf4 \\pos\cf0 , ~k_org.asProxy(\cf4 \\knob1\cf0 ) );\
+~sig.map( \cf4 \\freq\cf0 , ~k_org.asProxy(\cf4 \\knob2\cf0 ) );\
+~sig.map( \cf4 \\offset\cf0 , ~k_org.asProxy(\cf4 \\knob3\cf0 ) );\
+\
+~sig.set(\cf4 \\freq\cf0 , \cf6 1\cf0 )\
+~sig.set(\cf4 \\pos\cf0 , \cf6 0.5\cf0 )\
+~sig.set(\cf4 \\offset\cf0 , \cf6 10\cf0 )\
+}

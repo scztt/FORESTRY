@@ -1,0 +1,436 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138
+{\fonttbl\f0\fnil\fcharset0 Verdana;\f1\fnil\fcharset0 BitstreamVeraSans-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green102\blue0;\red0\green0\blue0;\red0\green0\blue179;
+\red179\green0\blue179;\red102\green0\blue102;\red128\green0\blue0;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f0\fs24 \cf2 // Read and process file\cf3 \
+\
+s.options.device = \cf4 ServerOptions\cf3 .devices[\cf5 12\cf3 ];\
+\
+(\
+\cf4 var\cf3  audio, freq, period, buffer, crossingBuffer, synth, pitchBuffer, pitches;\
+\cf4 var\cf3  lastSample=\cf5 0\cf3 , lastZeroCrossing=\cf5 0\cf3 ;\
+\
+\cf4 var\cf3  soundfile = \cf4 SoundFile\cf3 .new;\
+\cf4 var\cf3  overshoot, env, path;\
+
+\b\fs32 \
+\cf2 //path = "/Users/scott/Documents/_sounds/cello/C-string/C-str-7_mono.aif";\cf3 \
+\cf2 //path = "/Users/scott/Documents/_sounds/cello/C-str-3-mono.wav";\cf3 \
+\cf2 //path = "/Users/scott/Documents/_sounds/stand/bluett.aiff";\cf3 \
+path = \cf6 "/Users/scott/Documents/_sounds/antlers/bear-full.wav"\cf3 ;\
+\cf2 //path = "/Users/scott/Documents/_sounds/stand/dolce1.aiff";\cf3 \
+\cf2 //path = "/Users/scott/Documents/_sounds/cello/scelsi.wav";\cf3 \
+\cf2 //path = "/Users/scott/Documents/_sounds/playthrough.aiff";\cf3 \
+\cf2 //path = "/Users/scott/Documents/_sounds/melodica/1.wav";\cf3 \
+\cf2 //path = "/Users/scott/Desktop/saw.wav";\cf3 \
+
+\b0\fs24 \
+\cf4 Server\cf3 .default = s = \cf4 Server\cf3 .internal.boot;\
+s.wait;\
+soundfile.openRead( path );\
+\
+~audio = audio = \cf4 Signal\cf3 .newClear( soundfile.numFrames.postln );\
+soundfile.readData( audio );\
+soundfile.close();\
+\
+~zeroCrossings = \cf4 List\cf3 .new;\
+\
+fork \{\
+	\cf4 var\cf3  currentPitch, currentPeriod, lastCrossing, \
+		currentSample, nextSample, nextSampleMod, aValue, bValue, done; \
+	\
+	~buffer = buffer = \cf4 Buffer\cf3 .read( s, path );\
+	pitchBuffer = \cf4 Buffer\cf3 .alloc( s, soundfile.numFrames/\cf5 64 \cf3 + \cf5 100 \cf3 );\
+	env = \cf4 Buffer\cf3 .loadCollection( s, \cf4 FloatArray\cf3 .fill( \cf5 1000\cf3 , \cf5 1 \cf3 ) );\
+	s.sync;\
+	n = \{\
+		\cf4 var\cf3  sig, hasFreq, freq;\
+		sig = \cf4 PlayBuf\cf3 .ar( \cf5 1\cf3 , buffer.bufnum, doneAction:\cf5 2 \cf3 );\
+		sig = \cf4 HPF\cf3 .ar( \cf4 LPF\cf3 .ar( sig, \cf5 2000\cf3 ), \cf5 60 \cf3 );\
+		\cf2 //#freq, hasFreq = Pitch.kr( sig, 200, 100, 800, execFreq: 200, median:14, peakThreshold:0.75, downSample:1 );\cf3 \
+		#freq, hasFreq = \cf4 Tartini\cf3 .kr( sig );\
+		freq = \cf4 Gate\cf3 .kr( freq, hasFreq>\cf5 0.85 \cf3 );\
+		\cf4 RecordBuf\cf3 .kr( \cf4 Lag3\cf3 .kr(freq, \cf5 0.01\cf3 ), pitchBuffer.bufnum );\
+	\}.play;\
+	(soundfile.numFrames/soundfile.sampleRate).wait;\
+	\{ pitchBuffer.plot2( \cf6 "pitch"\cf3 , minval: \cf5 40\cf3 , maxval:\cf5 600 \cf3 ) \}.defer;\
+	pitchBuffer.getToFloatArray( wait:\cf5 0.1\cf3 , timeout:\cf5 30\cf3 , action:\{ \cf4 | array |\cf3  pitches = array; [ soundfile.numFrames, pitches.size].postln \}); \
+	\cf5 2\cf3 .wait;\
+	\
+	currentSample = \cf5 0\cf3 ;\
+	lastCrossing = \cf5 0\cf3 ;\
+	audio.size.postln;\
+	while(\{ currentSample < audio.size \}, \{\
+		currentSample.postln;\
+		\cf5 0.00001\cf3 .wait;\
+		currentPitch = pitches[ currentSample/\cf5 64 \cf3 ];\
+		\
+		if( currentPitch > \cf5 20\cf3 , \{\
+			currentPeriod = min(\cf5 44100 \cf3 / currentPitch, \cf5 44100\cf3 ).round(\cf5 1\cf3 );\
+			nextSample = currentSample + currentPeriod;\
+			nextSampleMod = \cf5 0\cf3 ;\
+			\
+			\cf6 "\\t%\\n"\cf3 .postf(currentPeriod);\
+			\
+			if( nextSample < audio.size, \{\
+				done = \cf4 false\cf3 ;\
+				while(\{ (nextSampleMod < currentPeriod) && done.not  \}, \{\
+					\cf5 0.000001\cf3 .wait;\
+					\cf6 "\\t%\\n"\cf3 .postf(nextSample + nextSampleMod);\
+					\
+					aValue = audio[max(nextSample - nextSampleMod - \cf5 1\cf3 , \cf5 0\cf3 )];\
+					bValue = audio[max(nextSample - nextSampleMod, \cf5 0\cf3 )];\
+					if((aValue <= \cf5 0\cf3 ) && (bValue > \cf5 0\cf3 ) && done.not, \{\
+						~zeroCrossings.add( nextSample - nextSampleMod );\
+						\cf6 "Crossing found at % (-% from expected)\\n"\cf3 .postf( nextSample - nextSampleMod, nextSampleMod );\
+						lastCrossing = nextSample - nextSampleMod;\
+						currentSample = lastCrossing - \cf5 1\cf3 ;\
+						done = \cf4 true\cf3 ;\
+					\});\
+	\
+					aValue = audio[min(nextSample + nextSampleMod - \cf5 1\cf3 , audio.size - \cf5 1\cf3 )];\
+					bValue = audio[min(nextSample + nextSampleMod, audio.size - \cf5 1\cf3 )];\
+					if( (aValue <= \cf5 0\cf3 ) && (bValue > \cf5 0\cf3 ) && done.not, \{\
+						~zeroCrossings.add( nextSample - nextSampleMod );\
+						\cf6 "Crossing found at % (% from expected)\\n"\cf3 .postf( nextSample + nextSampleMod, nextSampleMod );\
+						lastCrossing = nextSample + nextSampleMod;\
+						currentSample = lastCrossing - \cf5 1\cf3 ;\
+						done = \cf4 true\cf3 ;\
+					\});\
+					\
+					nextSampleMod = nextSampleMod + \cf5 1\cf3 ;\
+				\});\
+			\});\
+		\});\
+		currentSample = currentSample + \cf5 1\cf3 ;\
+	\});\
+\}\
+)\
+\
+~zeroCrossings\
+\
+(\
+~crossingBuffer = \cf4 Buffer\cf3 .loadCollection( s, ~zeroCrossings );\
+~envsize = \cf5 1024\cf3 ;\
+~transition = ~envsize * \cf5 0.0\cf3 ;\
+\
+~envcoll = ~envsize.collect(\{\
+	\cf4 | i |\cf3 \
+	case\
+	\{ i < ~transition \} \
+		\{ cos(pi * i / ~transition).neg + \cf5 1 \cf3 / \cf5 2 \cf3 \}\
+	\
+	\{ i > (~envsize - ~transition) \} \
+		\{ cos(pi * (~envsize - i) / ~transition).neg + \cf5 1 \cf3 / \cf5 2 \cf3 \}\
+	\
+	\{ \cf4 true\cf3  \} \
+		\{ \cf5 1 \cf3 \};\
+\});\
+\
+~env = \cf4 Buffer\cf3 .loadCollection(s, ~envcoll);\
+~env.loadCollection( ~envcoll );\
+)\
+\
+s.sync;\
+buffer.plot;\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f1\fs26 \cf3 ~korg = \cf4 KorgControl\cf3 (s, \cf7 \\harm\cf3 ).start;\
+~korg.debugScope
+\f0\fs24 \
+\
+~synth = \{\
+	\cf4 var\cf3  mousePos, startPos,\
+		startPosA, startPosB, \
+		nextStartA, nextStartB, \
+		trig, \
+		dur, durA, durB, trigDurA, trigDurB,\
+		trigStartA, trigStartB,\
+		startA, startB,\
+		trigNextStartA, trigNextStartB, \
+		sigA,\
+		nextStartPosA, nextStartPosB, startPosMix, rate,\
+		wavelength,\
+		poll;\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\b\fs36 \cf3 	rate = [ \cf5 1\cf3 , \cf5 1.05\cf3 , \cf5 0.967 \cf3 ];\
+
+\b0\fs24 \
+	startPos = \cf4 In\cf3 .kr( ~korg.busNum(\cf7 \\knob1\cf3 ) );\
+	startPos = startPos + \cf4 Resonz\cf3 .ar( \cf4 K2A\cf3 .ar(startPos), \cf5 5\cf3 , \cf5 0.1\cf3 );\
+	\cf2 //startPos = (startPos * BufSamples.kr( ~crossingBuffer.bufnum )).min(BufSamples.kr( ~crossingBuffer.bufnum )).max(0);\cf3 \
+	\cf2 //startPos = LFSaw.ar([0.01,0.02,0.04, 0.035] / BufDur.kr(~buffer.bufnum)) + MouseX.kr(0,2) % 1\cf3 \
+	startPos = startPos * \cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum );\
+	startPos.postln;\
+	\
+	startPosA = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ startPos.floor + \cf5 1\cf3 , startPos.floor ]);\
+	startPosB = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ startPos.floor, startPos.floor + \cf5 1\cf3 ]);\
+	startPosMix = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ \cf5 1 \cf3 - (startPos - startPosB), startPos - startPosA ]);\
+	startPosA.postln;\
+	\
+	nextStartPosA = startPosA + \cf5 1\cf3 ;\
+	nextStartPosB = startPosB + \cf5 1\cf3 ;\
+	\
+	startA = \{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, startPosA%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	startB = \{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, startPosB%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	nextStartA =\{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, nextStartPosA%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	nextStartB =\{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, nextStartPosB%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	\
+	wavelength = \cf4 LFNoise2\cf3 .kr(\cf5 0.05\cf3 ).range(\cf5 0.9\cf3 ,\cf5 1\cf3 );\
+	durA = \{ ( (nextStartA-startA)/\cf4 SampleRate\cf3 .ir ).max(\cf5 0.0000000001\cf3 ).min(\cf5 1\cf3 ) / wavelength \};\
+	durB = \{ ( (nextStartB-startB)/\cf4 SampleRate\cf3 .ir ).max(\cf5 0.0000000001\cf3 ).min(\cf5 1\cf3 ) / wavelength \};\
+\
+	\cf2 //dur = (durB * startPosMix) + (durA * (1-startPosMix));\cf3 \
+	dur = \cf5 1 \cf3 / ((rate * \cf5 540\cf3 ) + \{ \cf4 LFNoise2\cf3 .kr(\cf5 300\cf3 ).range(\cf5 -2\cf3 ,\cf5 2\cf3 ) \});\
+	\
+	#trig, trigStartA, trigStartB, trigNextStartA, trigNextStartB, trigDurA, trigDurB = \
+		\cf4 TDuty\cf3 .ar( dur, \cf5 0\cf3 , [ \cf5 1\cf3 , startA, startB, nextStartA, nextStartB, durA, durB ] );\
+	\cf2 //startPosMix = Gate.ar( startPosMix, trig );\cf3 \
+		\
+	\cf4 Out\cf3 .kr(\cf5 0\cf3 , [ startPosMix, startPosA, startPosB,\
+				\cf4 Gate\cf3 .ar( trigDurA*rate, trigDurA*rate),\
+				\cf4 Gate\cf3 .ar( trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum), trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum)),\
+				\cf4 Gate\cf3 .ar( trigDurB*rate, trigDurB*rate),\
+				\cf4 Gate\cf3 .ar( trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum) , trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum))\
+			]);		\
+	sigA = [ \cf4 XFade2\cf3 .ar( \
+				\cf4 BufGrainB\cf3 .ar( trig,\
+					dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+					sndbuf: ~buffer.bufnum, \
+					rate: wavelength,\
+					pos: trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+					envbuf: ~env.bufnum,\
+					interp: \cf5 4\cf3 ), \
+				\cf4 DC\cf3 .ar(\cf5 0\cf3 ),\
+				(startPosMix * \cf5 2 \cf3 - \cf5 1\cf3 )\
+			), \
+			\cf4 XFade2\cf3 .ar( \
+				\cf4 DC\cf3 .ar(\cf5 0\cf3 ), \
+				\cf4 BufGrainB\cf3 .ar( trig,\
+					dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+					sndbuf: ~buffer.bufnum, \
+					rate: wavelength,\
+					pos: trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+					envbuf: ~env.bufnum,\
+					interp: \cf5 4\cf3 ),\
+				(startPosMix * \cf5 2 \cf3 - \cf5 1\cf3 )\
+			)].postln;\
+		\
+	sigA = \cf4 CombC\cf3 .ar( sigA, \cf5 5\cf3 , \
+		[\cf5 0.1\cf3 , \cf5 0.5\cf3 , \cf5 2.3\cf3 , \cf5 4.5\cf3 ], \cf5 0.4 \cf3 ); \
+	\cf2 //sigA = FreeVerb.ar( Mix( sigA ), room:2.9 ); \cf3 \
+	\cf2 //[ sigA, sigA ];\cf3 \
+	\cf2 //LeakDC.ar( sigA ) * [1,1]\cf3 \
+\}.play;\
+\
+\
+\
+~synth = \{\
+	\cf4 var\cf3  mousePos, startPos,\
+		startPosA, startPosB, \
+		nextStartA, nextStartB, \
+		trig, \
+		dur, durA, durB, trigDurA, trigDurB,\
+		trigStartA, trigStartB,\
+		startA, startB,\
+		trigNextStartA, trigNextStartB, \
+		sigA,\
+		nextStartPosA, nextStartPosB, startPosMix, rate,\
+		wavelength,\
+		poll;\
+\
+
+\b\fs36 	rate = \cf5 1\cf3 ;
+\b0\fs24 \
+	\cf2 //startPos = startPos + Resonz.ar( K2A.ar(startPos), 5, 0.1);\cf3 \
+	\cf2 //startPos = (startPos * BufSamples.kr( ~crossingBuffer.bufnum )).min(BufSamples.kr( ~crossingBuffer.bufnum )).max(0);\cf3 \
+	startPos = \cf4 LFSaw\cf3 .ar([\cf5 0.01\cf3 ,\cf5 0.02\cf3 ,\cf5 0.04\cf3 , \cf5 0.035\cf3 ] / \cf4 BufDur\cf3 .kr(~buffer.bufnum)) + \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 2\cf3 ) % \cf5 1\cf3 \
+		* \cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum );\
+	startPos = \cf4 LFSaw\cf3 .ar( \cf5 1\cf3 /\cf4 BufDur\cf3 .kr(~buffer.bufnum) ) * \cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum );\
+	startPos = \cf5 0.6\cf3 ;\
+	\
+	startPosA = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ startPos.floor + \cf5 1\cf3 , startPos.floor ]);\
+	startPosB = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ startPos.floor, startPos.floor + \cf5 1\cf3 ]);\
+	startPosMix = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ \cf5 1 \cf3 - (startPos - startPosB), startPos - startPosA ]);\
+	\
+	nextStartPosA = startPosA + \cf5 1\cf3 ;\
+	nextStartPosB = startPosB + \cf5 1\cf3 ;\
+	\
+	startA = \{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, startPosA%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	startB = \{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, startPosB%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	nextStartA =\{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, nextStartPosA%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	nextStartB =\{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, nextStartPosB%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	\
+	wavelength = \cf5 1\cf3 ;\
+	durA = \{ ( (nextStartA-startA)/\cf4 SampleRate\cf3 .ir ).max(\cf5 0.0000000001\cf3 ).min(\cf5 1\cf3 ) / wavelength \};\
+	durB = \{ ( (nextStartB-startB)/\cf4 SampleRate\cf3 .ir ).max(\cf5 0.0000000001\cf3 ).min(\cf5 1\cf3 ) / wavelength \};\
+	\cf2 //dur = (durB * startPosMix) + (durA * (1-startPosMix));\cf3 \
+	dur = \cf5 1 \cf3 / \cf5 440\cf3 ;\
+	\
+	#trig, trigStartA, trigStartB, trigNextStartA, trigNextStartB, trigDurA, trigDurB = \
+		\cf4 TDuty\cf3 .ar( dur, \cf5 0\cf3 , [ \cf5 1\cf3 , startA, startB, nextStartA, nextStartB, durA, durB ] );\
+	\cf2 //startPosMix = Gate.ar( startPosMix, trig );\cf3 \
+		\
+	\cf4 Out\cf3 .kr(\cf5 0\cf3 , [ startPosMix, startPosA, startPosB,\
+				\cf4 Gate\cf3 .ar( trigDurA*rate, trigDurA*rate),\
+				\cf4 Gate\cf3 .ar( trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum), trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum)),\
+				\cf4 Gate\cf3 .ar( trigDurB*rate, trigDurB*rate),\
+				\cf4 Gate\cf3 .ar( trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum) , trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum))\
+			]);		\
+	sigA = [ \cf4 XFade2\cf3 .ar( \
+				\cf4 BufGrainB\cf3 .ar( trig,\
+					dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+					sndbuf: ~buffer.bufnum, \
+					rate: wavelength,\
+					pos: trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+					envbuf: ~env.bufnum,\
+					interp: \cf5 4\cf3 ), \
+				\cf4 DC\cf3 .ar(\cf5 0\cf3 ),\
+				(startPosMix * \cf5 2 \cf3 - \cf5 1\cf3 )\
+			), \
+			\cf4 XFade2\cf3 .ar( \
+				\cf4 DC\cf3 .ar(\cf5 0\cf3 ), \
+				\cf4 BufGrainB\cf3 .ar( trig,\
+					dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+					sndbuf: ~buffer.bufnum, \
+					rate: wavelength,\
+					pos: trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+					envbuf: ~env.bufnum,\
+					interp: \cf5 4\cf3 ),\
+				(startPosMix * \cf5 2 \cf3 - \cf5 1\cf3 )\
+			)];		\
+	sigA = [\
+		\cf4 BufGrainB\cf3 .ar( trig,\
+			dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+			sndbuf: ~buffer.bufnum, \
+			rate: wavelength,\
+			pos: trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+			envbuf: ~env.bufnum,\
+			interp: \cf5 4\cf3 ), \
+		\cf4 BufGrainB\cf3 .ar( trig,\
+			dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+			sndbuf: ~buffer.bufnum, \
+			rate: wavelength,\
+			pos: trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+			envbuf: ~env.bufnum,\
+			interp: \cf5 4\cf3 )\
+	];\
+\
+	\cf2 //sigA = CombC.ar( sigA, 5, \cf3 \
+	\cf2 //	[0.1, 0.5, 2.3, 4.5], 0.4 ); \cf3 \
+	\cf2 //sigA = FreeVerb.ar( Mix( sigA ), room:2.9 ); \cf3 \
+	\cf2 //sigA;\cf3 \
+	\cf2 //LeakDC.ar( sigA.sum ) * [1,1]\cf3 \
+\}.play;\
+\
+\
+\
+\
+\
+~synth = \{\
+	\cf4 var\cf3  mousePos, startPos,\
+		startPosA, startPosB, \
+		nextStartA, nextStartB, \
+		trig, \
+		dur, durA, durB, trigDurA, trigDurB,\
+		trigStartA, trigStartB,\
+		startA, startB,\
+		trigNextStartA, trigNextStartB, \
+		sigA,\
+		nextStartPosA, nextStartPosB, startPosMix, rate,\
+		wavelength,\
+		poll;\
+\
+
+\b\fs36 	rate = \cf5 1\cf3 ;
+\b0\fs24 \
+\
+	startPos = \cf4 In\cf3 .kr( ~korg.busNum(\cf7 \\knob1\cf3 ) );\
+	\cf2 //startPos = startPos + Resonz.ar( K2A.ar(startPos), 5, 0.1);\cf3 \
+	startPos = startPos\
+		* \cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum );\
+	\
+	startPosA = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ startPos.floor + \cf5 1\cf3 , startPos.floor ]);\
+	startPosB = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ startPos.floor, startPos.floor + \cf5 1\cf3 ]);\
+	startPosMix = \cf4 Select\cf3 .kr(startPos.floor%\cf5 2\cf3 , [ \cf5 1 \cf3 - (startPos - startPosB), startPos - startPosA ]);\
+	\
+	nextStartPosA = startPosA + \cf5 1\cf3 ;\
+	nextStartPosB = startPosB + \cf5 1\cf3 ;\
+	\
+	startA = \{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, startPosA%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	startB = \{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, startPosB%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	nextStartA =\{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, nextStartPosA%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	nextStartB =\{ \cf4 Dbufrd\cf3 ( ~crossingBuffer.bufnum, nextStartPosB%\cf4 BufSamples\cf3 .kr( ~crossingBuffer.bufnum ), \cf5 1 \cf3 ) \};\
+	\
+	wavelength = \cf5 1\cf3 ;\
+	durA = \{ ( (nextStartA-startA)/\cf4 SampleRate\cf3 .ir ).max(\cf5 0.0000000001\cf3 ).min(\cf5 1\cf3 ) / wavelength \};\
+	durB = \{ ( (nextStartB-startB)/\cf4 SampleRate\cf3 .ir ).max(\cf5 0.0000000001\cf3 ).min(\cf5 1\cf3 ) / wavelength \};\
+	\cf2 //dur = (durB * startPosMix) + (durA * (1-startPosMix));\cf3 \
+	dur = \cf5 1 \cf3 / \cf5 140\cf3 ;\
+	\
+	#trig, trigStartA, trigStartB, trigNextStartA, trigNextStartB, trigDurA, trigDurB = \
+		\cf4 TDuty\cf3 .ar( dur, \cf5 0\cf3 , [ \cf5 1\cf3 , startA, startB, nextStartA, nextStartB, durA, durB ] );\
+	\cf2 //startPosMix = Gate.ar( startPosMix, trig );\cf3 \
+		\
+\cf2 //	Out.kr(0, [ startPosMix, startPosA, startPosB,\cf3 \
+\cf2 //				Gate.ar( trigDurA*rate, trigDurA*rate),\cf3 \
+\cf2 //				Gate.ar( trigStartA / BufSamples.kr(~buffer.bufnum), trigStartA / BufSamples.kr(~buffer.bufnum)),\cf3 \
+\cf2 //				Gate.ar( trigDurB*rate, trigDurB*rate),\cf3 \
+\cf2 //				Gate.ar( trigStartB / BufSamples.kr(~buffer.bufnum) , trigStartB / BufSamples.kr(~buffer.bufnum))\cf3 \
+\cf2 //			]);		\cf3 \
+	sigA = [ \cf4 XFade2\cf3 .ar( \
+				\cf4 BufGrainB\cf3 .ar( trig,\
+					dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+					sndbuf: ~buffer.bufnum, \
+					rate: wavelength,\
+					pos: trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+					envbuf: ~env.bufnum,\
+					interp: \cf5 4\cf3 ), \
+				\cf4 DC\cf3 .ar(\cf5 0\cf3 ),\
+				(startPosMix * \cf5 2 \cf3 - \cf5 1\cf3 )\
+			), \
+			\cf4 XFade2\cf3 .ar( \
+				\cf4 DC\cf3 .ar(\cf5 0\cf3 ), \
+				\cf4 BufGrainB\cf3 .ar( trig,\
+					dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+					sndbuf: ~buffer.bufnum, \
+					rate: wavelength,\
+					pos: trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+					envbuf: ~env.bufnum,\
+					interp: \cf5 4\cf3 ),\
+				(startPosMix * \cf5 2 \cf3 - \cf5 1\cf3 )\
+			)];		\
+	sigA = [\
+		\cf4 BufGrainB\cf3 .ar( trig,\
+			dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+			sndbuf: ~buffer.bufnum, \
+			rate: wavelength,\
+			pos: trigStartA / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+			envbuf: ~env.bufnum,\
+			interp: \cf5 4\cf3 ), \
+		\cf4 BufGrainB\cf3 .ar( trig,\
+			dur: \cf4 MouseX\cf3 .kr(\cf5 0\cf3 ,\cf5 0.01\cf3 ), \
+			sndbuf: ~buffer.bufnum, \
+			rate: wavelength,\
+			pos: trigStartB / \cf4 BufSamples\cf3 .kr(~buffer.bufnum),\
+			envbuf: ~env.bufnum,\
+			interp: \cf5 4\cf3 )\
+	];\
+\
+	sigA = \cf4 CombC\cf3 .ar( sigA, \cf5 5\cf3 , \
+		[\cf5 0.1\cf3 , \cf5 0.5\cf3 , \cf5 2.3\cf3 , \cf5 4.5\cf3 ], \cf5 0.4 \cf3 ); \
+	sigA = \cf4 FreeVerb\cf3 .ar( \cf4 Mix\cf3 ( sigA ), room:\cf5 2.9 \cf3 ); \
+	\cf2 //sigA;\cf3 \
+	\cf4 LeakDC\cf3 .ar( sigA ) * [\cf5 1\cf3 ,\cf5 1\cf3 ]\
+\}.play;\
+\
+\
+k.asBus(\cf7 \\knob1\cf3 ).debugScope\
+\
+\cf4 Bus\cf3 (\cf7 \\control\cf3 , \cf5 0\cf3 , \cf5 5\cf3 ).debugScope;\
+}

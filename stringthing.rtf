@@ -1,0 +1,425 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138
+{\fonttbl\f0\fnil\fcharset0 BitstreamVeraSansMono-Roman;\f1\fnil\fcharset0 Monaco;}
+{\colortbl;\red255\green255\blue255;\red0\green102\blue0;\red0\green0\blue179;\red179\green0\blue179;
+\red128\green0\blue0;\red102\green0\blue102;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f0\fs24 \cf2 // ~points = [\cf0 \
+\cf2 //	( on:true, origY:1, pos: 0@0, radius: 0.001 ),\cf0 \
+\cf2 //	( on:true, origY:1, pos: 0.2@0.3.neg, radius: 0.03 ),\cf0 \
+\cf2 //	( on:true, origY:1.neg, pos: 0.4@0.3.neg, radius: 0.155 ),\cf0 \
+\cf2 //	( on:true, origY:1.neg, pos: 0.8@0.4.neg, radius: 0.125 ),\cf0 \
+\cf2 //	( on:true, origY:1, pos: 1.5@0.15, radius: 0.025 ),\cf0 \
+\cf2 //	( on:true, origY:1, pos: 1.99@0.neg, radius: 0.001 )\cf0 \
+\cf2 // ];\cf0 \
+\
+~points = \cf3 List\cf0 ();\
+~points.add( ( on:\cf3 true\cf0 , origY:\cf4 1\cf0 , pos: \cf4 1\cf0 @\cf4 1\cf0 , radius: \cf4 0.000001 \cf0 ) );\
+~points.add( ( on:\cf3 true\cf0 , origY:\cf4 1\cf0 , pos: \cf4 1\cf0 @\cf4 1\cf0 .neg, radius: \cf4 0.00001 \cf0 ) );\
+\
+~fingers = \cf3 IdentityDictionary\cf0 ();\
+\
+\cf3 MultiTouchPad\cf0 .start;\
+\cf3 MultiTouchPad\cf0 .touchAction = \{\
+	\cf3 |curID, xys|\cf0 \
+	\cf3 var\cf0  point = (xys[\cf4 0\cf0 ]*\cf4 2\cf0 )@(xys[\cf4 1\cf0 ]*\cf4 2\cf0 -\cf4 1\cf0 );\
+	\cf3 var\cf0  orig = if(xys[\cf4 1\cf0 ]>\cf4 0.5\cf0 , \{\cf4 1\cf0 \}, \{\cf4 -1\cf0 \});\
+	~fingers[curID] = ( on:\cf3 true\cf0 , origY:orig, pos:point, radius:xys[\cf4 2\cf0 ]/\cf4 10 \cf0 );\
+	\
+	~points = ~points.add(~fingers[curID]);\
+	~fingers.postln;\
+	~points.postln;\
+\
+	~sort.();	\
+	\{ \
+		~window.view.refresh;\
+		~send.value;\
+ 	\}.defer;\
+\};\
+\
+\cf3 MultiTouchPad\cf0 .setAction = \{\
+	\cf3 |curID, xys|\cf0 \
+	\cf3 var\cf0  point = (xys[\cf4 0\cf0 ]*\cf4 2\cf0 )@(xys[\cf4 1\cf0 ]*\cf4 2\cf0 -\cf4 1\cf0 );\
+	~fingers[curID][\cf5 \\pos\cf0 ] = point;\
+	~fingers[curID][\cf5 \\radius\cf0 ] = xys[\cf4 2\cf0 ]/\cf4 10\cf0 ;\
+	\
+	~sort.();\
+	\{ \
+		~window.view.refresh;\
+		~send.value;\
+	\}.defer;\
+\};\
+\
+\cf3 MultiTouchPad\cf0 .untouchAction = \{\
+	\cf3 |curID, xys|\cf0 \
+	~points.remove(~fingers[curID]);\
+	~fingers[curID] = \cf3 nil\cf0 ;\
+\
+	~sort.();\
+	\{ \
+		~window.view.refresh;\
+		~send.value;\
+	\}.defer;\
+\};\
+\
+~lineSegments = \cf3 IdentityDictionary\cf0 ();\
+~wavetable = \cf3 Signal\cf0 .newClear(\cf4 1024\cf0 );\
+	\
+~points.do(\{\
+	\cf3 | p |\cf0 \
+	p[\cf5 \\pos\cf0 ] = p[\cf5 \\pos\cf0 ] * (\cf4 1\cf0 @\cf4 1\cf0 ) + (\cf4 0.01\cf0 @\cf4 0\cf0 );\
+\});\
+\
+~window = \cf3 Window\cf0 (\cf6 "test"\cf0 , \cf3 Rect\cf0 (\cf4 0\cf0 ,\cf4 0\cf0 ,\cf4 600\cf0 ,\cf4 600\cf0 )).drawHook = \{\
+	\cf3 | view |\cf0 \
+	\cf3 var\cf0  x, xIncrement, lastY, strings, lastPosition, lastTheta, lastValid, thisTheta, \
+		protect, lines, smoothAmt=\cf4 80\cf0 , smoothEndY, smoothEndSlope;\
+		\
+	strings = [\cf4 0\cf0 ];\
+	\
+	\cf3 Pen\cf0 .scale(view.bounds.width/\cf4 2\cf0 , view.bounds.height/\cf4 2\cf0 );\
+	\cf3 Pen\cf0 .translate(\cf4 0\cf0 , \cf4 1\cf0 );\
+	\
+	\cf3 Pen\cf0 .fillColor = \cf3 Color\cf0 .red.alpha_(\cf4 0.3\cf0 );\
+	\cf3 Pen\cf0 .width = \cf4 1\cf0 /view.bounds.width;\
+	~points.do(\{\
+		\cf3 | p |\cf0 \
+		\cf6 "."\cf0 .postln;\
+		\cf3 Pen\cf0 .fillOval(\cf3 Rect\cf0 .aboutPoint(p[\cf5 \\pos\cf0 ], max(p[\cf5 \\radius\cf0 ],\cf4 0.02\cf0 ), max(p[\cf5 \\radius\cf0 ], \cf4 0.02\cf0 )));\
+	\});\
+	\
+	x = \cf4 0\cf0 ;\
+	xIncrement = \cf4 1\cf0 /(view.bounds.width/\cf4 2\cf0 );\
+	lastY = \cf4 0\cf0 ;\
+	lastPosition = \cf3 nil\cf0 ;\
+	lastTheta = \cf3 nil\cf0 ;\
+	lastValid = \cf4 0\cf0 ;\
+	~lineSegments.clear;		\
+	~wavetable = \cf3 Signal\cf0 .newClear(\cf4 1024\cf0 );\
+	\
+	i = \cf4 0\cf0 ;\
+	protect = \cf4 100\cf0 ;\
+\
+	while(\{ (i < (~points.size-\cf4 1\cf0 )) && (protect>\cf4 0\cf0 ) \}, \{\
+		\cf3 var\cf0  startTheta, startPosition, endTheta, endPosition, \
+			relTheta, dist, arcPosition, radSum, multA, multB,\
+			isContacting;\
+			\
+		protect = protect-\cf4 1\cf0 ;\
+			\
+		~lastP = (i > \cf4 0\cf0 ).if(\{~points[i-\cf4 1\cf0 ]\}); \
+		~thisP = ~points[i];\
+		~nextP = ~points[i+\cf4 1\cf0 ];\
+		~actualNextP = ~points[i+\cf4 1\cf0 ];\
+\
+		\cf2 //"Point at %\\n".postf(i);\cf0 \
+		\
+		\cf2 // Find next active point\cf0 \
+		j = i + \cf4 1\cf0 ;\
+		while(\{ ( ~points[j][\cf5 \\on\cf0 ] == \cf3 false\cf0 ) && (j < (~points.size-\cf4 1\cf0 )) \}, \{\
+			j = j + \cf4 1\cf0 ;\
+			~actualNextP = ~points[j];\
+		\});\
+		\cf2 //"\\tNext active point: %\\n".postf(j);\cf0 \
+\
+		dist = ~thisP[\cf5 \\pos\cf0 ].dist(~actualNextP[\cf5 \\pos\cf0 ]).abs;\
+		relTheta = (~actualNextP[\cf5 \\pos\cf0 ] - ~thisP[\cf5 \\pos\cf0 ]).theta;\
+		radSum = (~thisP[\cf5 \\radius\cf0 ] + ~actualNextP[\cf5 \\radius\cf0 ]);\
+		\
+		if( \cf3 true\cf0 , \{\
+			multA = \cf4 1\cf0 ;\
+			multB = \cf4 1\cf0 ;\
+		\},\{\
+			multA = \cf4 -1\cf0 ;\
+			multB = \cf4 -1\cf0 ;\
+		\});\
+		\
+		isContacting = \cf3 true\cf0 ;\
+\
+		case \
+			\{ ~thisP[\cf5 \\origY\cf0 ].isPositive && ~actualNextP[\cf5 \\origY\cf0 ].isPositive \} \
+				\{	\cf2 //"a".postln;\cf0 \
+					\
+					if( ~thisP[\cf5 \\radius\cf0 ] > ~actualNextP[\cf5 \\radius\cf0 ], \{\
+						startTheta = relTheta -\
+								acos( (~thisP[\cf5 \\radius\cf0 ] - ~actualNextP[\cf5 \\radius\cf0 ]).abs / dist );\
+					\},\{\
+						startTheta = relTheta + pi +\
+								acos( (~thisP[\cf5 \\radius\cf0 ] - ~actualNextP[\cf5 \\radius\cf0 ]).abs / dist );\
+					\});\
+					startPosition = ~thisP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~thisP[\cf5 \\radius\cf0 ], startTheta).asPoint;\
+					\
+					endTheta = startTheta;\
+					endPosition = ~actualNextP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~actualNextP[\cf5 \\radius\cf0 ], endTheta).asPoint;\
+\
+					thisTheta = (endPosition - startPosition).theta;\
+					if(lastTheta.notNil, \{\
+						isContacting = lastTheta.diffCircle(thisTheta) >= \cf4 0\cf0 ;\
+					\})\
+				\}\
+			\{ ~thisP[\cf5 \\origY\cf0 ].isPositive && ~actualNextP[\cf5 \\origY\cf0 ].isNegative \}\
+				\{	\cf2 //"b".postln;\cf0 \
+					startTheta = relTheta - \
+								( \
+									acos( ~thisP[\cf5 \\radius\cf0 ] / \
+										( ~thisP[\cf5 \\radius\cf0 ] / radSum * dist)\
+									)\
+								);\
+					startPosition = ~thisP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~thisP[\cf5 \\radius\cf0 ], startTheta).asPoint;\
+					endTheta = (relTheta + pi) - \
+								( \
+									acos( ~actualNextP[\cf5 \\radius\cf0 ] / \
+										( ~actualNextP[\cf5 \\radius\cf0 ] / radSum * dist)\
+									)\
+								);	\
+					endPosition = ~actualNextP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~actualNextP[\cf5 \\radius\cf0 ], endTheta).asPoint;\
+					\
+					thisTheta = (endPosition - startPosition).theta;\
+					if(lastTheta.notNil, \{\
+						isContacting = lastTheta.diffCircle(thisTheta) >= \cf4 0\cf0 ;\
+					\})\
+				\} \
+			\{ ~thisP[\cf5 \\origY\cf0 ].isNegative && ~actualNextP[\cf5 \\origY\cf0 ].isPositive \} \
+				\{	\cf2 // "c".postln;\cf0 \
+					startTheta = relTheta + \
+								( \
+									multA *  \
+									acos( ~thisP[\cf5 \\radius\cf0 ] / \
+										( ~thisP[\cf5 \\radius\cf0 ] / radSum * dist)\
+									)\
+								);\
+					startPosition = ~thisP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~thisP[\cf5 \\radius\cf0 ], startTheta).asPoint;\
+					endTheta = (relTheta + pi) +\
+								( \
+									acos( ~actualNextP[\cf5 \\radius\cf0 ] / \
+										( ~actualNextP[\cf5 \\radius\cf0 ] / radSum * dist)\
+									)\
+								);	\
+					endPosition = ~actualNextP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~actualNextP[\cf5 \\radius\cf0 ], endTheta).asPoint;\
+					thisTheta = (endPosition - startPosition).theta;\
+					if(lastTheta.notNil, \{\
+						isContacting = lastTheta.diffCircle(thisTheta) <= \cf4 0\cf0 ;\
+					\})\
+				\}\
+			\{ ~thisP[\cf5 \\origY\cf0 ].isNegative && ~actualNextP[\cf5 \\origY\cf0 ].isNegative \} \
+				\{	\cf2 // "d".postln;\cf0 \
+					if( ~thisP[\cf5 \\radius\cf0 ] > ~actualNextP[\cf5 \\radius\cf0 ], \{\
+						startTheta = relTheta + pi -\
+								acos( (~thisP[\cf5 \\radius\cf0 ] - ~actualNextP[\cf5 \\radius\cf0 ]).abs / dist );\
+					\},\{\
+						startTheta = relTheta - pi -\
+								acos( (~thisP[\cf5 \\radius\cf0 ] - ~actualNextP[\cf5 \\radius\cf0 ]).abs / dist );\
+					\});\
+					startPosition = ~thisP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~thisP[\cf5 \\radius\cf0 ], startTheta).asPoint;\
+					\
+					endTheta = startTheta;\
+					endPosition = ~actualNextP[\cf5 \\pos\cf0 ] + \cf3 Polar\cf0 (~actualNextP[\cf5 \\radius\cf0 ], endTheta).asPoint;\
+\
+					thisTheta = (endPosition - startPosition).theta;\
+					if(lastTheta.notNil, \{\
+						isContacting = lastTheta.diffCircle(thisTheta) <= \cf4 0\cf0 ;\
+					\})\
+				\}\
+		;\
+		\
+		if( ~thisP[\cf5 \\on\cf0 ], \{\
+			\cf2 // "\\t is on\\n".postf();\cf0 \
+			if( lastPosition.notNil && isContacting.not, \{\
+				\cf2 // "\\t is acute, turning off (%, %, %).\\n".postf(lastTheta, thisTheta, lastTheta.diffCircle(thisTheta));\cf0 \
+				isContacting.postln;\
+				~thisP[\cf5 \\on\cf0 ] = \cf3 false\cf0 ;\
+				lastPosition = \cf3 nil\cf0 ;\
+				i = lastValid;\
+				\cf3 Pen\cf0 .fillColor = \cf3 Color\cf0 .black.alpha_(\cf4 0.5\cf0 );\
+				\cf3 Pen\cf0 .fillOval(\cf3 Rect\cf0 .aboutPoint(~thisP[\cf5 \\pos\cf0 ], \
+					max(~thisP[\cf5 \\radius\cf0 ],\cf4 0.02\cf0 ), max(~thisP[\cf5 \\radius\cf0 ], \cf4 0.02\cf0 )).postln);\
+				\
+				~lineSegments[~thisP] = \cf3 nil\cf0 ;\
+\
+			\}, \{\
+				\cf2 // "\\t is valid, connecting (%).\\n".postf((endPosition - startPosition).theta);\cf0 \
+				\
+				\cf2 // Draw arc\cf0 \
+				if(lastPosition.notNil, \{\
+					\cf2 // "\\t\\twith an arc.\\n".postf();\cf0 \
+					\cf3 Pen\cf0 .moveTo(lastPosition);\
+					\cf3 Pen\cf0 .addArc(~thisP[\cf5 \\pos\cf0 ], ~thisP[\cf5 \\radius\cf0 ], \
+						(lastPosition - ~thisP[\cf5 \\pos\cf0 ]).theta,\
+						((startPosition - ~thisP[\cf5 \\pos\cf0 ]).theta - (lastPosition - ~thisP[\cf5 \\pos\cf0 ]).theta) );\
+					\cf3 Pen\cf0 .stroke;\
+				\});\
+		\
+				\cf3 Pen\cf0 .line( startPosition, endPosition );\
+				\cf3 Pen\cf0 .stroke;\
+				\
+				~lineSegments[~thisP] = [startPosition, endPosition];\
+		\
+				lastValid = i;\
+				i = i+\cf4 1\cf0 ;\
+				lastTheta = (endPosition - startPosition).theta;\
+				lastPosition = endPosition;		\
+			\});\
+		\}, \{\
+			\cf2 // "\\t is off\\n".postf();\cf0 \
+			if( lastPosition.notNil && isContacting, \{\
+				\cf2 // "\\t but should be on - turning on.".postf();\cf0 \
+				~thisP[\cf5 \\on\cf0 ] = \cf3 true\cf0 ;\
+				lastPosition = \cf3 nil\cf0 ;\
+				\
+				i = lastValid;\
+				\cf3 Pen\cf0 .fillColor = \cf3 Color\cf0 .blue.alpha_(\cf4 0.5\cf0 );\
+				\cf3 Pen\cf0 .fillOval(\cf3 Rect\cf0 .aboutPoint(~thisP[\cf5 \\pos\cf0 ], \
+					max(~thisP[\cf5 \\radius\cf0 ],\cf4 0.02\cf0 ), max(~thisP[\cf5 \\radius\cf0 ], \cf4 0.02\cf0 )));\
+			\},\{\
+				\cf2 // "\\t and remains off.\\n".postf();\cf0 \
+				i = i + \cf4 1\cf0 ;\
+			\})\
+		\});\
+		\
+		\cf2 // Fill an array with points\cf0 \
+		~lineSegments.keysValuesDo(\{\
+			\cf3 | key, val |\cf0 \
+			\cf3 var\cf0  step, start, end, \
+				startY, endY, stepY;\
+			start = val[\cf4 0\cf0 ].x / \cf4 2 \cf0 * ~wavetable.size;\
+			end = val[\cf4 1\cf0 ].x / \cf4 2 \cf0 * ~wavetable.size;\
+			\
+			startY = val[\cf4 0\cf0 ].y;\
+			endY = val[\cf4 1\cf0 ].y;\
+			stepY = (endY - startY) / (end - start);\
+			y = startY;\
+			\
+			(start, start + \cf4 1 \cf0 .. min(end - \cf4 1\cf0 , \cf4 1023\cf0 )).do(\{\
+				\cf3 |i|\cf0 \
+				~wavetable[i.floor] = y.neg;\
+				y = y + stepY;\
+			\})\
+		\});\
+		\
+		~points.do(\{\
+			\cf3 | p |\cf0 \
+			\cf3 var\cf0  start, end, stepSize, steps, yStart, yScale,\
+				x, y;\
+			if( p[\cf5 \\on\cf0 ], \{\
+				start = ((p[\cf5 \\pos\cf0 ].x - p[\cf5 \\radius\cf0 ]) / \cf4 2 \cf0 * ~wavetable.size).floor;\
+				end = ((p[\cf5 \\pos\cf0 ].x + p[\cf5 \\radius\cf0 ]) / \cf4 2 \cf0 * ~wavetable.size).floor;\
+				steps = end-start;\
+				yStart = p[\cf5 \\pos\cf0 ].y;\
+				yScale = p[\cf5 \\radius\cf0 ].neg * p[\cf5 \\origY\cf0 ];\
+				(start, start+\cf4 1 \cf0 .. min(end-\cf4 1\cf0 , \cf4 1022\cf0 )).do(\{\
+					\cf3 | val, i |\cf0 \
+\
+					x = i / (steps/\cf4 2\cf0 ) - \cf4 1\cf0 ;\
+					y = (\cf4 1 \cf0 - x.pow(\cf4 2\cf0 )).pow(\cf4 0.5\cf0 );\
+					if( ~wavetable[val] == \cf4 0\cf0 , \{\
+						~wavetable[val] = (yStart + (y*yScale)).neg;\
+					\});\
+				\})\
+			\})\
+		\});\
+		\
+		\cf2 // Smooth edges\cf0 \
+		smoothEndY = ~wavetable[smoothAmt];\
+		smoothEndSlope = (~wavetable[smoothAmt + \cf4 1\cf0 ] - ~wavetable[smoothAmt]) / ~wavetable.size;\
+		\
+		\
+	\});\
+\};\
+\
+~buf = \cf3 Buffer\cf0 .alloc(s, \cf4 1024\cf0 , bufnum:\cf4 0\cf0 );\
+\
+~send = \cf3 Collapse\cf0 (\{\
+	~buf.sendCollection(~wavetable);	\
+\}, delta:\cf4 0.0\cf0 );\
+\
+~sort = \{\
+	~points.sort(\{ \
+		\cf3 |a,b|\cf0  \
+		a[\cf5 \\pos\cf0 ].x < b[\cf5 \\pos\cf0 ].x;\
+	\});\
+\};\
+\
+~view = \cf3 SCUserView\cf0 (~window, ~window.bounds.moveTo(\cf4 0\cf0 ,\cf4 0\cf0 ));\
+~view.mouseDownAction = \{\
+	\cf3 | view, x, y |\cf0 \
+	\cf3 var\cf0  found;\
+	\cf3 var\cf0  scaledPoint = (x@y) / (view.bounds.extent/\cf4 2\cf0 ) - (\cf4 0\cf0 @\cf4 1\cf0 ) * (\cf4 1\cf0 @\cf4 1\cf0 );\
+	~points.do(\{\
+		\cf3 | p |\cf0 \
+		if( scaledPoint.dist(p[\cf5 \\pos\cf0 ]) < p[\cf5 \\radius\cf0 ], \{\
+			found = p;\
+		\})\
+	\});\
+	~dragging = found;\
+\};\
+\
+~view.mouseMoveAction = \{\
+	\cf3 | view, x, y |\cf0 \
+	if( ~dragging.notNil, \{\
+		\cf3 var\cf0  scaledPoint = (x@y) / (view.bounds.extent/\cf4 2\cf0 ) - (\cf4 0\cf0 @\cf4 1\cf0 ) * (\cf4 1\cf0 @\cf4 1\cf0 );\
+		~dragging[\cf5 \\pos\cf0 ] = scaledPoint;\
+\
+		~sort.();\
+\
+		~window.view.refresh;\
+	\})\
+\};\
+\
+~view.mouseUpAction = \{\
+	~dragging = \cf3 nil\cf0 ;\
+\};\
+\
+~snd = \cf3 Buffer\cf0 .read(s,\cf6 "/Users/scott/Documents/_sounds/playthrough.aiff"\cf0 , bufnum:\cf4 11 \cf0 );\
+\
+\cf3 SynthDef\cf0 (\cf5 \\buzz\cf0 , \{\
+	\cf3 |out, amp=1, freq=440|\cf0 \
+	\cf3 var\cf0  sig = \cf3 PlayBuf\cf0 .ar(\cf4 1\cf0 , ~snd.bufnum, loop:\cf4 1\cf0 );\
+	sig = \cf3 Shaper\cf0 .ar( ~buf.bufnum, sig );\
+	\cf3 Out\cf0 .ar( out, sig );\
+\}).add;\
+\
+\cf3 SynthDef\cf0 (\cf5 \\delay\cf0 , \{\
+	\cf3 | out, in |\cf0 \
+	\cf3 var\cf0  sig = \cf3 In\cf0 .ar(in);\
+	\cf3 Out\cf0 .ar([out, out+\cf4 1\cf0 ], sig + \cf3 CombC\cf0 .ar( sig, \cf4 5\cf0 , [\cf4 0.5\cf0 ,\cf4 0.7\cf0 ], \cf4 5 \cf0 ))\
+\}).add;\
+\
+~delay = \cf3 Synth\cf0 (\cf5 \\delay\cf0 , [\cf5 \\out\cf0 , \cf4 0\cf0 , \cf5 \\in\cf0 , \cf4 10\cf0 ]);\
+\
+~notes = \cf3 Array\cf0 .newClear(\cf4 200\cf0 );\
+~keyDict = 
+\f1\fs18 [\cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf4 0\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf4 21\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf4 8\cf0 , \cf3 nil\cf0 , \cf4 9\cf0 , \cf4 10\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf4 20\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf4 32\cf0 , \cf4 34\cf0 , \cf4 33\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf3 nil\cf0 , \cf4 11\cf0 , \cf4 5\cf0 , \cf4 3\cf0 , \cf4 13\cf0 , \cf4 24\cf0 , \cf4 14\cf0 , \cf4 15\cf0 , \cf4 16\cf0 , \cf4 29\cf0 , \cf4 17\cf0 , \cf4 18\cf0 , \cf4 19\cf0 , \cf4 7\cf0 , \cf4 6\cf0 , \cf4 30\cf0 , \cf4 31\cf0 , \cf4 22\cf0 , \cf4 25\cf0 , \cf4 12\cf0 , \cf4 26\cf0 , \cf4 28\cf0 , \cf4 4\cf0 , \cf4 23\cf0 , \cf4 2\cf0 , \cf4 27\cf0 , \cf4 1\cf0 ];
+\f0\fs24 \
+\
+~view.keyDownAction = \{\
+	\cf3 | view, char, mod, ascii |\cf0 \
+	\cf3 var\cf0  note = ~keyDict[ascii] + \cf4 30\cf0 ;\
+	if( ~notes[note].isNil, \{\
+		~notes[note] = \cf3 Synth\cf0 (\cf5 \\buzz\cf0 , [\cf5 \\out\cf0 , \cf4 10\cf0 , \cf5 \\freq\cf0 , note.midicps, \cf5 \\amp\cf0 , \cf4 0.3\cf0 ], target: ~delay, addAction:\cf5 \\addBefore\cf0  );\
+	\});\
+\};\
+\
+~view.keyUpAction = \{\
+	\cf3 | view, char, mod, ascii |\cf0 \
+	\cf3 var\cf0  note = ~keyDict[ascii] + \cf4 30\cf0 ;\
+	if( ~notes[note].notNil, \{\
+		~notes[note].free;\
+		~notes[note] = \cf3 nil\cf0 ;\
+	\})	\
+\};\
+\
+~window.front.refresh;\
+~window.onClose = \{ \cf3 MultiTouchPad\cf0 .stop \};\
+\
+\cf2 //~wavetable.plot2;\cf0 \
+\
+fork \{\
+	\cf4 10\cf0 .wait;\
+	~buf.plot;\
+\}\
+\cf2 //~buf.zero;\cf0 \
+\cf2 //~buf.setn(0, (0,0.01..1) );\cf0 \
+\cf2 //~buf.plot;\cf0 \
+\cf2 //~buf.getToFloatArray(action:\{ |f| f.do(_.postln)\})\cf0 \
+\
+}

@@ -1,0 +1,228 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138
+{\fonttbl\f0\fnil\fcharset0 Monaco;\f1\fnil\fcharset0 BitstreamVeraSans-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green102\blue0;\red0\green0\blue0;\red0\green0\blue179;
+\red128\green0\blue0;\red102\green0\blue102;\red179\green0\blue179;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
+
+\f0\fs30 \cf2 // . . . F O R E S T R Y . . . //\cf3 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f1\fs26 \cf2 /* Not used\
+	s = Server.internal.boot;\
+	p = DualEnvir.all;\
+*/\cf3 \
+\
+ \cf2 // Execute one time\cf3 \
+(\
+	e = \cf4 Environment\cf3 ().linkDoc;\
+)\
+\
+~korg = \cf4 KorgControl\cf3 (s, \cf5 \\layers\cf3 ).start;\
+\cf2 //~korg.debugScope;\cf3 \
+\
+~korg.node.addDependant(\{\
+	\cf6 "fucking killed!"\cf3 .postln\
+\})\
+\
+~envs = [\
+	\cf4 InterplEnv\cf3 (\
+		[\cf7 0.001\cf3 ,\cf7 1\cf3 ,\cf7 0.001\cf3 ],\
+		[\cf7 0.5\cf3 , \cf7 0.5\cf3 ],\
+		[\cf5 \\exponential\cf3 , \cf5 \\exponential\cf3 ]),\
+	\cf4 InterplEnv\cf3 (\
+		[\cf7 0.001\cf3 ,\cf7 1\cf3 ,\cf7 0.001\cf3 ],\
+		[\cf7 0.15\cf3 , \cf7 0.85\cf3 ],\
+		[\cf5 \\exponential\cf3 , \cf5 \\exponential\cf3 ]),\
+	\cf4 InterplEnv\cf3 (\
+		[\cf7 0.001\cf3 ,\cf7 0.7\cf3 ,\cf7 1\cf3 ],\
+		[\cf7 0.8\cf3 , \cf7 0.2\cf3 ],\
+		[\cf5 \\exponential\cf3 , \cf5 \\exponential\cf3 ])\
+];\
+~envs.do(\cf4 _\cf3 .plot);\
+~scalars = [\cf7 -1\cf3 ,\cf7 0\cf3 ,\cf7 1\cf3 ];\
+\
+\
+~multiEnvGen = \{\
+	\cf4 | baseEnvelopes, timeScalars |\cf3 \
+	\cf4 var\cf3  envs;\
+	\cf4 var\cf3  times, timePositions;\
+	\cf4 var\cf3  level;\
+	\
+	\{\
+		\cf4 | baseTime=4, timeFade=0, envFade=0 |\cf3 \
+		\
+		timePositions = timeScalars.collect(\{ \
+			\cf4 | i |\cf3 \
+			\cf4 var\cf3  actualTime = (\cf7 2\cf3 **(i-\cf7 1\cf3 )) * baseTime;\
+			\cf4 LFSaw\cf3 .ar( \cf7 1\cf3 /actualTime )\
+		\}).postln;\
+	\
+		times = baseEnvelopes.collect(\{\
+			\cf4 | env |\cf3 			\
+			timePositions.collect(\{\
+				\cf4 | pos |\cf3 \
+				\cf4 IEnvGen\cf3 .ar(env, pos);\
+			\})\
+		\}).postln;\
+		\
+		level = \cf4 SelectXFocus\cf3 .ar( envFade, \
+			times.collect(\{\
+				\cf4 | times |\cf3 \
+				\cf4 SelectXFocus\cf3 .ar( timeFade, times, \cf7 1 \cf3 )\
+			\}),\
+			\cf7 1\cf3 \
+		);\
+	\}\
+\};\
+\
+\{\
+	\cf4 SelectXFocus\cf3 .kr( \cf4 MouseX\cf3 .kr(\cf7 0\cf3 ,\cf7 3\cf3 ), [\cf7 0\cf3 ,\cf7 1\cf3 ,\cf7 2\cf3 ,\cf7 3\cf3 ] );\
+\}.play;\
+\
+m = \{\
+	\cf4 | t, e |\cf3 \
+	\cf4 var\cf3  baseTime, level, sig;\
+	t = t*\cf7 3\cf3 ;\
+	e = e*\cf7 3\cf3 ;\
+	baseTime = \cf7 4\cf3 ;\
+	level = ~multiEnvGen.(~envs, ~scalars).(baseTime, t, e);\
+	sig = \cf4 LPF\cf3 .ar( \cf4 LFPulse\cf3 .ar(\cf7 8\cf3 , \cf7 0\cf3 , level), (level*\cf7 12300\cf3 )+\cf7 80 \cf3 );\
+	\cf4 Klank\cf3 .ar(`[\
+			[\cf7 1\cf3 , \cf7 1.05\cf3 , \cf7 3\cf3 , \cf7 5\cf3 , \cf7 7\cf3 , \cf7 7.1\cf3 , \cf7 13\cf3 ],\
+			\cf7 1 \cf3 ! \cf7 7\cf3 ,\
+			[\cf7 1\cf3 , \cf7 0.5\cf3 , \cf7 0.4\cf3 , \cf7 0.3\cf3 , \cf7 0.2\cf3 , \cf7 0.1\cf3 , \cf7 0.08\cf3 ]\
+		], \
+		sig, \
+		freqscale: (\cf7 700 \cf3 + (level.poll*\cf4 WhiteNoise\cf3 .ar(\cf7 50\cf3 )))\
+	) * [\cf7 0.01\cf3 ,\cf7 0.01\cf3 ];\
+\}.play(args:[\
+		\cf5 \\e\cf3 , ~korg.asMap(\cf5 \\knob1\cf3 ),\
+		\cf5 \\t\cf3 , ~korg.asMap(\cf5 \\slider1\cf3 )\
+	]);\
+\
+n = \{\
+	\cf4 | t, e |\cf3 \
+	\cf4 var\cf3  baseTime, level, sig;\
+	t = t*\cf7 3\cf3 ;\
+	e = e*\cf7 3\cf3 ;\
+	baseTime = \cf7 12\cf3 ;\
+	level = ~multiEnvGen.(~envs, ~scalars).(baseTime, t, e);\
+	sig = \cf4 LPF\cf3 .ar( \cf4 LFPulse\cf3 .ar(\cf7 0.25\cf3 , \cf7 0\cf3 , level), (level*\cf7 12300\cf3 )+\cf7 80 \cf3 ) * \cf7 0.1\cf3 ;\
+	\cf4 Klank\cf3 .ar(`[\
+			[\cf7 1\cf3 , \cf7 1.05\cf3 , \cf7 3\cf3 , \cf7 5\cf3 , \cf7 7\cf3 , \cf7 7.1\cf3 , \cf7 13\cf3 ],\
+			\cf7 1 \cf3 ! \cf7 7\cf3 ,\
+			[\cf7 1\cf3 , \cf7 0.5\cf3 , \cf7 0.4\cf3 , \cf7 0.3\cf3 , \cf7 0.2\cf3 , \cf7 0.1\cf3 , \cf7 0.08\cf3 ] * \cf7 8\cf3 \
+		], \
+		sig, \
+		freqscale: (\cf7 10 \cf3 + (level.poll*\cf4 WhiteNoise\cf3 .ar(\cf7 2\cf3 )))\
+	) * [\cf7 0.01\cf3 ,\cf7 0.01\cf3 ];\
+\}.play(args:[\
+		\cf5 \\e\cf3 , ~korg.asMap(\cf5 \\knob2\cf3 ),\
+		\cf5 \\t\cf3 , ~korg.asMap(\cf5 \\slider2\cf3 )\
+	]);\
+\
+	\
+o = \{\
+	\cf4 | t, e |\cf3 \
+	\cf4 var\cf3  baseTime, level, sig;\
+	t = t*\cf7 3\cf3 ;\
+	e = e*\cf7 3\cf3 ;\
+	baseTime = \cf7 4\cf3 ;\
+	level = ~multiEnvGen.(~envs, ~scalars).(baseTime, t, e);\
+	sig = \cf4 FreeVerb\cf3 .ar( \
+		\cf4 LFPulse\cf3 .ar(\cf7 8\cf3 , \cf7 0\cf3 , level*\cf7 0.1\cf3 ),\
+		mix: \cf7 0.6\cf3 ,\
+		room: \cf7 0.8\cf3 ,\
+		damo: \cf7 0.2\cf3 \
+	 );\
+ 	sig = sig \
+ 		* \cf4 HPF\cf3 .ar(\cf4 WhiteNoise\cf3 .ar(level), \cf7 10000 \cf3 - (level*\cf7 6000\cf3 ))\
+ 		* [\cf7 1\cf3 ,\cf7 1\cf3 ] * \cf7 0.5 \cf3 ;\
+\}.play(args:[\
+		\cf5 \\e\cf3 , ~korg.asMap(\cf5 \\knob3\cf3 ),\
+		\cf5 \\t\cf3 , ~korg.asMap(\cf5 \\slider3\cf3 )\
+	]);\
+\
+\
+o = \{\
+	\cf4 | t, e |\cf3 \
+	\cf4 var\cf3  baseTime, level, sig;\
+	t = t*\cf7 3\cf3 ;\
+	e = e*\cf7 3\cf3 ;\
+	baseTime = \cf7 4\cf3 ;\
+	level = ~multiEnvGen.(~envs, ~scalars).(baseTime, t, e);\
+	sig = \cf4 FreeVerb\cf3 .ar( \
+		\cf4 LFPulse\cf3 .ar(\cf7 8\cf3 , \cf7 0\cf3 , level*\cf7 0.1\cf3 ),\
+		mix: \cf7 0.6\cf3 ,\
+		room: \cf7 0.8\cf3 ,\
+		damo: \cf7 0.2\cf3 \
+	 );\
+ 	sig = sig \
+ 		* \cf4 HPF\cf3 .ar(\cf4 WhiteNoise\cf3 .ar(level), \cf7 10000 \cf3 - (level*\cf7 6000\cf3 ))\
+ 		* [\cf7 1\cf3 ,\cf7 1\cf3 ] * \cf7 0.5 \cf3 ;\
+\}.play(args:[\
+		\cf5 \\e\cf3 , ~korg.asMap(\cf5 \\knob3\cf3 ),\
+		\cf5 \\t\cf3 , ~korg.asMap(\cf5 \\slider3\cf3 )\
+	]);\
+\
+\
+~noises.notNil.if(\{ \
+	~noises.do( \cf4 _\cf3 .free );\
+	~noises.clear;\
+\});\
+\
+~noises = \cf4 PathName\cf3 (\cf6 "/Users/scott/Documents/_sounds/cleaned/noise"\cf3 ).entries.collect(\{\
+	\cf4 |path|\cf3 \
+	\cf4 Buffer\cf3 .read(s, path.fullPath.postln);\
+\});\
+\
+~noises.choose.play\
+\
+\
+\
+p = \{\
+	\cf4 | b, pulseT, pulseEnv, freqT, freqEnv, rawFreq, freqMix |\cf3 \
+	\cf4 var\cf3  baseTime, level, sig, pulse, pos, freq, freqMap;\
+	pulseT = pulseT*\cf7 3\cf3 ;\
+	pulseEnv = pulseEnv*\cf7 3\cf3 ;\
+	freqT = freqT*\cf7 3\cf3 ;\
+	freqEnv = freqEnv*\cf7 3\cf3 ;\
+	baseTime = \cf7 4\cf3 ;\
+	level = ~multiEnvGen.(~envs, ~scalars).(baseTime, pulseT, pulseEnv);\
+	freq = ~multiEnvGen.(~envs, ~scalars).(baseTime, freqT, freqEnv);\
+	freqMap = \cf4 ControlSpec\cf3 (\cf7 0.5\cf3 , \cf7 60\cf3 , warp:\cf5 \\exponential\cf3 );\
+	freq = ((\cf7 40\cf3 *freq) * freqMix) + (freqMap.map(rawFreq) * (\cf7 1\cf3 -freqMix));\
+	pulse = \cf4 LFPulse\cf3 .ar(freq, \cf7 0\cf3 , level*\cf7 0.8\cf3 );\
+	pos = \cf4 Phasor\cf3 .ar(\cf7 1\cf3 , pulse*\cf4 BufRateScale\cf3 .kr(b), \cf7 0\cf3 , \cf4 BufFrames\cf3 .kr(b));\
+	sig = \cf4 FreeVerb\cf3 .ar( \
+		\cf4 BufRd\cf3 .ar(\cf7 1\cf3 , b, pos, interpolation:\cf7 4\cf3 ),\
+		mix: \cf7 0.1\cf3 ,\
+		room: \cf7 0.8\cf3 ,\
+		damp: \cf7 0.1\cf3 \
+	 );\
+	sig = \cf4 HardCompress\cf3 .ar(sig, \cf7 0.1\cf3 , \cf7 0.1\cf3 );\
+	sig = \cf4 Klank\cf3 .ar(`[\
+			[\cf7 1\cf3 , \cf7 1.05\cf3 , \cf7 3\cf3 , \cf7 5\cf3 , \cf7 7\cf3 , \cf7 7.1\cf3 , \cf7 13\cf3 ],\
+			\cf7 1 \cf3 ! \cf7 7\cf3 ,\
+			[\cf7 1\cf3 , \cf7 0.5\cf3 , \cf7 0.4\cf3 , \cf7 0.3\cf3 , \cf7 0.2\cf3 , \cf7 0.1\cf3 , \cf7 0.08\cf3 ] * \cf7 0.1\cf3 \
+		], \
+		sig, \
+		freqscale: (\cf7 1700 \cf3 + (level.poll*\cf4 WhiteNoise\cf3 .ar(\cf7 20\cf3 )))\
+\
+	);\
+ 	sig = sig * [\cf7 1\cf3 ,\cf7 1\cf3 ] * \cf7 0.001 \cf3 ;\
+\}.play(args:[\
+		\cf5 \\b\cf3 , \cf7 2\cf3 , \cf2 //,~noises.choose.bufnum,\cf3 \
+		\cf5 \\pulseT\cf3 , ~korg.asMap(\cf5 \\knob1\cf3 ),\
+		\cf5 \\pulseEnv\cf3 , ~korg.asMap(\cf5 \\slider1\cf3 ),\
+		\cf5 \\freqT\cf3 , ~korg.asMap(\cf5 \\knob2\cf3 ),\
+		\cf5 \\freqEnv\cf3 , ~korg.asMap(\cf5 \\slider2\cf3 ),\
+		\cf5 \\rawFreq\cf3 , ~korg.asMap(\cf5 \\slider3\cf3 ),\
+		\cf5 \\freqMix\cf3 , ~korg.asMap(\cf5 \\knob3\cf3 ) \
+	]);\
+\
+p.free\
+\
+p.set(\cf5 \\b\cf3 , \cf7 5\cf3 );\
+}
