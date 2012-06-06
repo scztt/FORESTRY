@@ -1,8 +1,9 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
-{\fonttbl\f0\fnil\fcharset0 LucidaSans;}
-{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green102\blue0;\red0\green0\blue179;
-\red128\green0\blue0;\red179\green0\blue179;}
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf320
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green102\blue0;\red77\green77\blue77;
+\red0\green0\blue179;\red128\green0\blue0;\red0\green0\blue255;\red179\green0\blue179;\red255\green102\blue0;
+\red51\green51\blue191;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
 \f0\fs24 \cf2 \
 \cf3 /* Not used\
@@ -11,83 +12,100 @@
 */\cf2 \
 \
  \cf3 // Execute one time\cf2 \
-(\
-	\cf4 DualEnvir\cf2 .new(s, \cf5 \\click\cf2 );\
-	p[\cf5 \\click\cf2 ].push;\
-)\
+\cf4 (\cf2 \
+	\cf5 DualEnvir\cf4 .\cf2 new\cf4 (\cf2 s\cf4 ,\cf2  \cf6 \\click\cf4 );\cf2 \
+	p\cf4 [\cf6 \\click\cf4 ].\cf2 push\cf4 ;\cf2 \
+\cf4 )\cf2 \
 \
 \
-(\
-	\cf4 SynthDef\cf2 (\cf5 \\click\cf2 , \{\
-		\cf4 | out=0, amp=0.5, repeats=0.1, freq=0, tail=0.1, ampIn=0.001, ampOut=0.2 |\cf2 \
-		\cf4 var\cf2  trueDur, sig, combedSig, delays, klankSet;\
+\cf4 (\cf2 \
+	\cf5 SynthDef\cf4 (\cf6 \\click\cf4 ,\cf2  \cf4 \{\cf2 \
+		\cf7 | out=0, amp=0.5, repeats=0.1, freq=0, tail=0.1, ampIn=0.001, ampOut=0.2 |\cf2 \
+		\cf7 var\cf2  trueDur\cf4 ,\cf2  sig\cf4 ,\cf2  combedSig\cf4 ,\cf2  delays\cf4 ,\cf2  klankSet\cf4 ,\cf2  \
+			high\cf4 ,\cf2  highFreqs\cf4 ,\cf2  highMods\cf4 ;\cf2 \
 		\
 		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
 		\cf3 // source\cf2 \
-		trueDur = ( (\cf6 1\cf2 /freq)*repeats ).max(\cf6 0.1\cf2 );\
-		sig = amp * \cf6 10 \cf2 * \cf4 Impulse\cf2 .ar(freq) * \cf4 Trig\cf2 .ar(\cf6 1\cf2 , trueDur  );\
+		trueDur = \cf4 (\cf2  \cf4 (\cf8 1\cf2 /freq\cf4 )\cf2 *repeats \cf4 ).\cf2 max\cf4 (\cf8 0.1\cf4 );\cf2 \
+		sig = amp * \cf8 10 \cf2 * \cf5 Impulse\cf4 .\cf2 ar\cf4 (\cf2 freq\cf4 )\cf2  * \cf5 Trig\cf4 .\cf2 ar\cf4 (\cf8 1\cf4 ,\cf2  trueDur  \cf4 );\cf2 \
 		sig = sig \
-			+ \cf4 LPF\cf2 .ar( sig*\cf6 30\cf2 , \cf6 50\cf2 )\
-			+ \cf4 LPF\cf2 .ar( sig*\cf6 15\cf2 , \cf6 8000\cf2 );\
+			+ \cf5 LPF\cf4 .\cf2 ar\cf4 (\cf2  sig*\cf8 30\cf4 ,\cf2  \cf8 50\cf4 )\cf2 \
+			+ \cf5 LPF\cf4 .\cf2 ar\cf4 (\cf2  sig*\cf8 15\cf4 ,\cf2  \cf8 8000\cf4 );\cf2 \
 			\
 		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
 		\cf3 // comb\cf2 \
-		ampIn = \cf4 MouseX\cf2 .kr(\cf6 0.00001\cf2 , \cf6 0.01\cf2 , \cf6 1\cf2 );\
-		ampOut = \cf4 MouseY\cf2 .kr(\cf6 0.001\cf2 , \cf6 0.4\cf2 , \cf6 1\cf2 );\
-		delays = [\cf6 6\cf2 ,\cf6 9\cf2 ,\cf6 12\cf2 ,\cf6 18\cf2 ].nthPrime.reciprocal * \cf6 3\cf2 ;\
-		combedSig = (\cf6 0.01\cf2 *\cf4 CombC\cf2 .ar( sig, \cf6 0.5\cf2 , delays, tail )).sum;\
-		combedSig = (combedSig * \cf6 0.2\cf2 ) + \
-			\cf4 Amplitude\cf2 .ar(combedSig, ampIn, ampOut) * \cf4 HPF\cf2 .ar(\cf4 WhiteNoise\cf2 .ar(), \cf6 16000\cf2 , \cf6 6\cf2 );\
-		sig = sig + combedSig;\
+		ampIn = \cf5 MouseX\cf4 .\cf2 kr\cf4 (\cf8 0.00001\cf4 ,\cf2  \cf8 0.01\cf4 ,\cf2  \cf8 1\cf4 );\cf2 \
+		ampOut = \cf5 MouseY\cf4 .\cf2 kr\cf4 (\cf8 0.001\cf4 ,\cf2  \cf8 0.4\cf4 ,\cf2  \cf8 1\cf4 );\cf2 \
+		delays = \cf4 [\cf8 6\cf4 ,\cf8 9\cf4 ,\cf8 12\cf4 ,\cf8 18\cf4 ].\cf2 nthPrime\cf4 .\cf2 reciprocal * \cf8 3\cf4 ;\cf2 \
+		combedSig = \cf4 (\cf8 0.01\cf2 *\cf5 CombC\cf4 .\cf2 ar\cf4 (\cf2  sig\cf4 ,\cf2  \cf8 0.5\cf4 ,\cf2  delays\cf4 ,\cf2  tail \cf4 )).\cf2 sum\cf4 ;\cf2 \
+		combedSig = \cf4 (\cf2 combedSig * \cf8 0.2\cf4 )\cf2  + \
+			\cf5 Amplitude\cf4 .\cf2 ar\cf4 (\cf2 combedSig\cf4 ,\cf2  ampIn\cf4 ,\cf2  ampOut\cf4 )\cf2  * \cf5 HPF\cf4 .\cf2 ar\cf4 (\cf5 WhiteNoise\cf4 .\cf2 ar\cf4 (),\cf2  \cf8 16000\cf4 ,\cf2  \cf8 6\cf4 );\cf2 \
+		sig = sig + combedSig\cf4 ;\cf2 \
 		\
 		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
 		\cf3 // klank\cf2 \
 		klankSet = \
-		`[	[ \cf6 3\cf2 , 		\cf6 5\cf2 , 		\cf6 7\cf2 , 		\cf6 8\cf2 , 		\cf6 7.1\cf2 	]*\cf6 13\cf2 ,\
-			[ \cf6 0.3\cf2 ,	\cf6 0.3\cf2 ,		\cf6 0.4\cf2 ,		\cf6 0.001\cf2 ,	\cf6 0.001\cf2 ],\
-			[ \cf6 0.5\cf2 ,	 \cf6 0.3\cf2 ,	\cf6 0.2\cf2 ,		\cf6 10.5\cf2 ,	\cf6 10\cf2 	] ];\
-		sig = \cf4 DynKlank\cf2 .ar( klankSet, sig, decayscale:\cf6 2 \cf2 );\
-		\cf4 DetectSilence\cf2 .ar( sig, \cf6 -60\cf2 .dbamp, doneAction:\cf6 2 \cf2 );\
-		sig = sig.tanh;\
-		\cf4 Out\cf2 .ar( out, sig );\
-	\}).add;\
-)\
+		`\cf4 [\cf2 	\cf4 [\cf2  \cf8 3\cf4 ,\cf2  		\cf8 5\cf4 ,\cf2  		\cf8 7\cf4 ,\cf2  		\cf8 8\cf4 ,\cf2  		\cf8 7.1\cf2 	\cf4 ]\cf2 *\cf8 13\cf4 ,\cf2 \
+			\cf4 [\cf2  \cf8 0.3\cf4 ,\cf2 		\cf8 0.3\cf4 ,\cf2 		\cf8 0.4\cf4 ,\cf2 		\cf8 0.001\cf4 ,\cf2 	\cf8 0.001\cf4 ],\cf2 \
+			\cf4 [\cf2  \cf8 0.5\cf4 ,\cf2 		 \cf8 0.3\cf4 ,\cf2 		\cf8 0.2\cf4 ,\cf2 		\cf8 10.5\cf4 ,\cf2 		\cf8 10\cf2 	\cf4 ]\cf2  \cf4 ];\cf2 \
+		sig = \cf5 DynKlank\cf4 .\cf2 ar\cf4 (\cf2  klankSet\cf4 ,\cf2  sig\cf4 ,\cf2  decayscale:\cf8 2 \cf4 );\cf2 \
+		\cf5 DetectSilence\cf4 .\cf2 ar\cf4 (\cf2  sig\cf4 ,\cf2  \cf8 -60\cf4 .\cf2 dbamp\cf4 ,\cf2  doneAction:\cf8 2 \cf4 );\cf2 \
+		sig = sig\cf4 .\cf2 tanh\cf4 ;\cf2 \
+		\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
+		\cf3 // high\cf2 \
+		high = \cf5 HPF\cf4 .\cf2 ar\cf4 (\cf2 sig\cf4 ,\cf2  \cf8 9000\cf4 );\cf2 \
+		high = \cf5 LeakDC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 );\cf2 \
+		highFreqs = \cf4 [\cf8 80\cf4 ,\cf2  \cf8 84\cf4 ,\cf2  \cf8 89\cf4 ,\cf2  \cf8 96\cf4 ].\cf2 midicps\
+			+ \cf4 \{\cf2  \cf5 SinOsc\cf4 .\cf2 ar\cf4 (\cf8 0.2 \cf2 * \cf8 0.2\cf4 .\cf2 rand\cf4 ).\cf2 range\cf4 (\cf8 -10\cf4 ,\cf8 10\cf4 )\cf2  \cf4 \}\cf2  ! \cf8 4\cf4 ;\cf2 \
+		highFreqs = highFreqs\cf4 .\cf2 reciprocal\cf4 ;\cf2 \
+		high = \cf5 CombC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 ,\cf2  \cf8 0.2\cf4 ,\cf2  \cf0 highFreqs\cf4 ,\cf2  \cf8 2.8\cf4 );\cf2 \
+		high = \cf5 LPF\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 ,\cf2  \cf0 highFreqs. * 2);\
+		high = high.sum;\cf2 \
+		high = \cf5 LeakDC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 		sig = high\cf4 ;\cf2 \
+		\
+		\cf5 Out\cf4 .\cf2 ar\cf4 (\cf2  out\cf4 ,\cf2  sig \cf4 );\cf2 \
+	\cf4 \}).\cf2 add\cf4 ;\cf2 \
+\cf4 )\cf2 \
 \
-~b_1 = \cf4 Buffer\cf2 .alloc( s, \cf6 513\cf2 );\
-~s_1 = \cf4 Signal\cf2 .newClear( \cf6 513 \cf2 );\
+\cf9 ~b_1\cf2  = \cf5 Buffer\cf4 .\cf2 alloc\cf4 (\cf2  s\cf4 ,\cf2  \cf8 513\cf4 );\cf2 \
+\cf9 ~s_1\cf2  = \cf5 Signal\cf4 .\cf2 newClear\cf4 (\cf2  \cf8 513 \cf4 );\cf2 \
 \
-w = \cf4 SCWindow\cf2 .new.front;\
-e = \cf4 SCEnvelopeEdit\cf2 ( w, w.view.bounds.moveTo(\cf6 0\cf2 ,\cf6 0\cf2 ), \cf4 Env\cf2 ([\cf6 0\cf2 ,\cf6 1\cf2 ],[\cf6 1\cf2 ]))\
-	.resize_(\cf6 5\cf2 );\
+w = \cf5 SCWindow\cf4 .\cf2 new\cf4 .\cf2 front\cf4 ;\cf2 \
+e = \cf5 SCEnvelopeEdit\cf4 (\cf2  w\cf4 ,\cf2  w\cf4 .\cf2 view\cf4 .\cf2 bounds\cf4 .\cf2 moveTo\cf4 (\cf8 0\cf4 ,\cf8 0\cf4 ),\cf2  \cf5 Env\cf4 ([\cf8 0\cf4 ,\cf8 1\cf4 ],[\cf8 1\cf4 ]))\cf2 \
+	\cf4 .\cf2 resize_\cf4 (\cf8 5\cf4 );\cf2 \
 \
-~tail = \{ \cf4 SinOsc\cf2 .kr(\cf6 0.05\cf2 ).range(\cf6 0.0\cf2 ,\cf6 4\cf2 ) \};\
-~tail.debugScope\
+\cf9 ~tail\cf2  = \cf4 \{\cf2  \cf5 SinOsc\cf4 .\cf2 kr\cf4 (\cf8 0.05\cf4 ).\cf2 range\cf4 (\cf8 0.0\cf4 ,\cf8 4\cf4 )\cf2  \cf4 \};\cf2 \
+\cf9 ~tail\cf4 .\cf2 debugScope\
 \
-~a = \cf4 Pbind\cf2 (\
-	\cf5 \\instrument\cf2 , \cf5 \\click\cf2 ,\
-	\cf5 \\dur\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 0.35\cf2 , 	\cf6 0.35\cf2 , 	\cf6 0.35\cf2 , 	\cf6 2\cf2 	], \cf4 inf\cf2 ),\
-	\cf5 \\amp\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 0.05\cf2 , 	\cf6 0.05\cf2 , 	\cf6 0.25\cf2 , 	\cf6 0.75\cf2 ], \cf4 inf\cf2 ),\
-	\cf5 \\freq\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 1\cf2 ,	\cf4 Pseq\cf2 ([\cf6 30\cf2 ],\cf6 1\cf2 ),		\cf6 0\cf2 ,		\cf6 0 \cf2 ], \cf4 inf\cf2 ),\
-	\cf5 \\repeats\cf2 ,	\cf4 Pseq\cf2 ([	\cf6 1\cf2 ,		\cf6 3\cf2 ,		\cf6 1\cf2 ,		\cf6 1\cf2 	], \cf4 inf\cf2 ),\
-	\cf5 \\tail\cf2 , ~tail\
-)\
+\cf9 ~a\cf2  = \cf5 Pbind\cf4 (\cf2 \
+	\cf6 \\instrument\cf4 ,\cf2  \cf6 \\click\cf4 ,\cf2 \
+	\cf6 \\dur\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 0.35\cf4 ,\cf2  	\cf8 0.35\cf4 ,\cf2  	\cf8 0.35\cf4 ,\cf2  	\cf8 2\cf2 	\cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\amp\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 0.05\cf4 ,\cf2  	\cf8 0.05\cf4 ,\cf2  	\cf8 0.25\cf4 ,\cf2  	\cf8 0.75\cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\freq\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 	\cf5 Pseq\cf4 ([\cf8 30\cf4 ],\cf8 1\cf4 ),\cf2 		\cf8 0\cf4 ,\cf2 		\cf8 0 \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\repeats\cf4 ,\cf2 	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 		\cf8 3\cf4 ,\cf2 		\cf8 1\cf4 ,\cf2 		\cf8 1\cf2 	\cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\tail\cf4 ,\cf2  \cf9 ~tail\cf2 \
+\cf4 )\cf2 \
 \
-~a = \cf4 Pbind\cf2 (\
-	\cf5 \\instrument\cf2 , \cf5 \\click\cf2 ,\
-	\cf5 \\dur\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 0.15\cf2 , 	\cf6 0.15\cf2 ,	\cf6 0.15\cf2 ,	\cf6 0.15\cf2 , \cf6 8       \cf2 ], \cf4 inf\cf2 ),\
-	\cf5 \\amp\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 0.05\cf2 , 	\cf6 0.05\cf2 , 	\cf6 0.25\cf2 , 	\cf6 0.75, 0.05  \cf2 ], \cf4 inf\cf2 ),\
-	\cf5 \\freq\cf2 , 	\cf4 Pseq\cf2 ([	\cf6 1\cf2 ,	 \cf4 Pseq\cf2 ([\cf6 30\cf2 ],\cf6 1\cf2 ),      \cf6 1\cf2 ,	\cf6 10,    40     \cf2 ], \cf4 inf\cf2 ),\
-	\cf5 \\repeats\cf2 ,	\cf4 Pseq\cf2 ([	\cf6 1\cf2 ,		\cf6 3\cf2 ,		\cf6 1\cf2 ,		\cf6 1\cf2 	], \cf4 inf\cf2 ),\
-	\cf5 \\tail\cf2 , ~tail\
-)\
+\cf9 ~a\cf2  = \cf5 Pbind\cf4 (\cf2 \
+	\cf6 \\instrument\cf4 ,\cf2  \cf6 \\click\cf4 ,\cf2 \
+	\cf6 \\dur\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 0.15\cf4 ,\cf2  	\cf8 0.15\cf4 ,\cf2 	\cf8 0.15\cf4 ,\cf2 	\cf8 0.15\cf4 ,\cf2  \cf8 8       \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\amp\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 0.05\cf4 ,\cf2  	\cf8 0.05\cf4 ,\cf2  	\cf8 0.25\cf4 ,\cf2  	\cf8 0.75\cf4 ,\cf2  \cf8 0.05  \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\freq\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 	 \cf5 Pseq\cf4 ([\cf8 30\cf4 ],\cf8 1\cf4 ),\cf2       \cf8 1\cf4 ,\cf2 	\cf8 10\cf4 ,\cf2     \cf8 40     \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\repeats\cf4 ,\cf2 	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 		\cf8 3\cf4 ,\cf2 		\cf8 1\cf4 ,\cf2 		\cf8 1\cf2 	\cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\tail\cf4 ,\cf2  \cf9 ~tail\cf2 \
+\cf4 )\cf2 \
 \
-~a.stop;\
+\cf9 ~a\cf4 .\cf2 play\cf4 ;\cf2 \
 \
-~klank1 = \{\
+\cf9 ~klank1\cf2  = \cf4 \{\cf2 \
 	\
-\}\
+\cf4 \}\cf2 \
 \
-~b = \{\
-	~a.ar !\cf6 2\cf2 ;\
-\};\
-~b.play;}
+\cf9 ~b\cf2  = \cf4 \{\cf2 \
+	\cf9 ~a\cf4 .\cf2 ar !\cf8 2\cf4 ;\cf2 \
+\cf4 \};\cf2 \
+\cf9 ~b\cf4 .\cf2 play\cf4 ;}

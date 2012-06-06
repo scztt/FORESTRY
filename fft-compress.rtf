@@ -1,0 +1,99 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
+{\fonttbl\f0\fnil\fcharset0 DejaVuSansMono;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue178;\red77\green77\blue77;
+\red178\green0\blue178;\red255\green102\blue0;\red0\green0\blue255;\red128\green0\blue0;\red0\green102\blue0;
+}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f0\fs24 \cf2 w = \cf3 Window\cf4 ().\cf2 front\cf4 ;\cf2 \
+u = \cf3 UserView\cf4 (\cf2 w\cf4 ,\cf2  w\cf4 .\cf2 bounds\cf4 .\cf2 moveTo\cf4 (\cf5 0\cf4 ,\cf5 0\cf4 ));\cf2 \
+\
+d = \cf5 0 \cf2 ! \cf5 256\cf4 ;\cf2 \
+\
+\cf6 ~buf\cf2  = \cf3 Buffer\cf4 .\cf2 alloc\cf4 (\cf2 s\cf4 ,\cf2  \cf5 256\cf4 ,\cf2  \cf5 1\cf4 );\cf2 \
+\
+\cf6 ~fftFunc\cf2  = \cf4 \{\cf2 \
+	\cf7 var\cf2  sig1\cf4 ,\cf2  sig2\cf4 ,\cf2  \
+		fft1\cf4 ,\cf2  fft2\cf4 ,\cf2  \
+		unpacks1\cf4 ,\cf2  unpacks2\cf4 ,\cf2 \
+		trig\cf4 ,\cf2  unpack\cf4 ;\cf2 \
+	\cf7 var\cf2  fftsize = \cf5 1024\cf4 ;\cf2 \
+	\
+	sig1 = \cf3 InFeedback\cf4 .\cf2 ar\cf4 (\cf5 10\cf4 );\cf2 \
+	sig2 = \cf3 InFeedback\cf4 .\cf2 ar\cf4 (\cf5 11\cf4 );\cf2 \
+	\
+	fft1 = \cf3 FFT\cf4 (\cf3 LocalBuf\cf4 (\cf2 fftsize\cf4 ),\cf2  sig1\cf4 ,\cf2  hop:\cf5 0.75\cf4 ,\cf2  wintype:\cf5 1\cf4 );\cf2 \
+	fft1 = \cf3 PV_MagSmear\cf4 (\cf2 fft1\cf4 ,\cf2  \cf5 1\cf4 );\cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	fft2 = \cf3 FFT\cf4 (\cf3 LocalBuf\cf4 (\cf2 fftsize\cf4 ),\cf2  sig1\cf4 ,\cf2  hop:\cf5 0.75\cf4 ,\cf2  wintype:\cf5 1\cf4 );\cf2 \
+	fft2 = \cf3 PV_MagSmear\cf4 (\cf2 fft2\cf4 ,\cf2  \cf5 1\cf4 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\
+	trig = fft >= \cf5 0\cf4 ;\cf2 \
+	unpacks1 = \cf5 128\cf4 .\cf2 collect\cf4 (\{\cf2 \
+		\cf7 | i |\cf2 \
+		unpack = \cf3 Unpack1FFT\cf4 (\cf2 fft1\cf4 ,\cf2  fftsize\cf4 ,\cf2  i\cf4 ,\cf2  \cf5 0\cf4 );\cf2 \
+		\cf3 Demand\cf4 .\cf2 kr\cf4 (\cf2 trig\cf4 ,\cf2  \cf5 0\cf4 ,\cf2  unpack1\cf4 );\cf2 \
+	\cf4 \});\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	unpacks2 = \cf5 128\cf4 .\cf2 collect\cf4 (\{\cf2 \
+		\cf7 | i |\cf2 \
+		unpack = \cf3 Unpack1FFT\cf4 (\cf2 fft2\cf4 ,\cf2  fftsize\cf4 ,\cf2  i\cf4 ,\cf2  \cf5 0\cf4 );\cf2 \
+		\cf3 Demand\cf4 .\cf2 kr\cf4 (\cf2 trig\cf4 ,\cf2  \cf5 0\cf4 ,\cf2  unpack2\cf4 );\cf2 \
+	\cf4 \});\cf2 \
+		\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\cf3 SendReply\cf4 .\cf2 kr\cf4 (\cf2  \
+		\cf3 PulseDivider\cf4 .\cf2 kr\cf4 (\cf2 trig\cf4 ,\cf2  \cf5 5\cf4 ),\cf2 \
+		\cf8 '/fft'\cf4 ,\cf2 \
+		unpacks\cf4 ,\cf2 \
+		\cf5 1\cf2 \
+	\cf4 );\cf2 \
+\
+	\cf9 // Processing\cf2 \
+	fftProcSize = \cf5 64\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	fftProc1 = \cf3 FFT\cf4 (\cf3 LocalBuf\cf4 (\cf2 fftProcSize\cf4 ),\cf2  sig1\cf4 ,\cf2  hop:\cf5 0.75\cf4 ,\cf2  wintype:\cf5 1\cf4 );\cf2 \
+	fftProc2 = \cf3 FFT\cf4 (\cf3 LocalBuf\cf4 (\cf2 fftProcSize\cf4 ),\cf2  sig2\cf4 ,\cf2  hop:\cf5 0.75\cf4 ,\cf2  wintype:\cf5 1\cf4 );\cf2 \
+	fftSum = \cf3 FFT\cf4 (\cf3 LocalBuf\cf4 (\cf2 fftProcSize\cf4 ),\cf2  sig1 + sig2\cf4 ,\cf2  hop:\cf5 0.75\cf4 ,\cf2  wintype:\cf5 1\cf4 );\cf2 \
+	\
+	fftNew1 = 0 ! fftProcSize;\
+\cf0 	fftNew2 = 0 ! fftProcSize;\
+	\cf2 \
+	fftNew = fftProcSize\cf4 .\cf2 collect\cf4 (\{\
+		var mag1, phase1, mag2, phase2\cf2 \
+	\cf4 \});\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 \
+\cf4 \}.\cf2 play\cf4 (\cf2 s\cf4 );\cf2 \
+\
+\cf6 ~table\cf2  = \cf4 \{\cf2  \cf5 1.0\cf4 .\cf2 rand \cf4 \}\cf2  ! \cf5 256\cf4 ;\cf2 \
+\
+o = \cf3 OSCFunc\cf4 (\{\cf2 \
+	\cf7 | msg |\cf2 \
+	\cf6 ~table\cf2  = msg\cf4 .\cf2 copyToEnd\cf4 (\cf5 4\cf4 );\cf2 \
+	\cf4 \{\cf2  u\cf4 .\cf2 refresh \cf4 \}.\cf2 defer\cf4 ;\cf2 \
+	\cf9 //~table.postln;\cf2 \
+\cf4 \},\cf2  \cf8 '/fft'\cf4 );\cf2 \
+\
+u\cf4 .\cf2 drawFunc = \cf4 \{\cf2 \
+	\cf7 | view |\cf2 \
+	\cf7 var\cf2  height = view\cf4 .\cf2 bounds\cf4 .\cf2 height\cf4 ;\cf2 \
+	\cf7 var\cf2  widthMult = view\cf4 .\cf2 bounds\cf4 .\cf2 width / \cf6 ~table\cf4 .\cf2 size\cf4 ;\cf2 \
+	\
+	\cf3 Pen\cf4 .\cf2 fillColor = \cf3 Color\cf4 .\cf2 red\cf4 .\cf2 alpha_\cf4 (\cf5 0.5\cf4 );\cf2 \
+	\cf3 Pen\cf4 .\cf2 moveTo\cf4 (\cf2 view\cf4 .\cf2 bounds\cf4 .\cf2 leftBottom\cf4 );\cf2 \
+	\cf3 Pen\cf4 .\cf2 lineTo\cf4 (\cf3 Point\cf4 (\cf5 0\cf4 ,\cf2  height - \cf4 (\cf6 ~table\cf4 [\cf5 0\cf4 ]\cf2  * height\cf4 )));\cf2 \
+	\cf6 ~table\cf4 .\cf2 do\cf4 (\{\cf2 \
+		\cf7 | mag, i |\cf2 \
+		\cf3 Pen\cf4 .\cf2 lineTo\cf4 (\cf3 Point\cf4 (\cf2 i * widthMult\cf4 ,\cf2  mag\cf4 .\cf2 linlin\cf4 (\cf5 0\cf4 ,\cf5 4\cf4 ,\cf2 height\cf4 ,\cf5 0\cf4 )));\cf2 \
+	\cf4 \});\cf2 \
+	\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\cf3 Pen\cf4 .\cf2 lineTo\cf4 (\cf2 view\cf4 .\cf2 bounds\cf4 .\cf2 rightBottom\cf4 );\cf2 \
+	\cf3 Pen\cf4 .\cf2 lineTo\cf4 (\cf2 view\cf4 .\cf2 bounds\cf4 .\cf2 leftBottom\cf4 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\cf3 Pen\cf4 .\cf2 fill\cf4 ;\cf2 \
+\cf4 \};\cf2 \
+}

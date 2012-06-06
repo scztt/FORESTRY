@@ -1,0 +1,85 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf320
+{\fonttbl\f0\fnil\fcharset0 DejaVuSansMono;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red77\green77\blue77;\red0\green0\blue179;
+\red102\green0\blue102;\red179\green0\blue179;\red0\green0\blue255;\red128\green0\blue0;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f0\fs24 \cf2 s\cf3 .\cf2 reboot\cf3 ;\cf2 \
+b = \cf4 Buffer\cf3 .\cf2 read\cf3 (\cf2 s\cf3 ,\cf2  \cf5 "/Users/scott/Documents/_sounds/barn-owl-drone-1.wav"\cf3 );\cf2 \
+\
+n = \cf4 NodeProxy\cf3 .\cf2 audio\cf3 (\cf2 s\cf3 ,\cf6 2\cf3 );\cf2 \
+n\cf3 .\cf2 play\cf3 ;\cf2 \
+\
+\
+\
+n\cf3 .\cf2 source = \cf3 \{\cf2 \
+	\cf7 | out = 0, ampSmooth=0.1, fMult = 1 |\cf2 \
+	\cf7 var\cf2  sig\cf3 ,\cf2  amp\cf3 ,\cf2 \
+		filterFreqs\cf3 ,\cf2  filteredSig\cf3 ,\cf2  amount\cf3 ,\cf2  rq\cf3 ,\cf2  fade\cf3 ,\cf2 \
+		filteredSigAmp\cf3 ,\cf2 \
+		noiseAddition\cf3 ;\cf2 \
+	\
+	filterFreqs = \cf3 [\cf6 10\cf3 ,\cf2  \cf6 30\cf3 ,\cf2  \cf6 40\cf3 ]\cf2  * fMult\cf3 ;\cf2 \
+		\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	amount = \cf4 EnvGen\cf3 .\cf2 kr\cf3 (\cf4 Env\cf3 .\cf2 perc\cf3 (),\cf2  \
+		gate: \cf4 Impulse\cf3 .\cf2 kr\cf3 (\cf6 0.6\cf3 ),\cf2 \
+		timeScale: \cf6 0.8\cf2 \
+	\cf3 );\cf2 \
+	\
+	noiseAddition = \cf4 SinOsc\cf3 .\cf2 ar\cf3 (\cf2 \
+		freq: amount\cf3 .\cf2 linlin\cf3 (\cf6 0\cf3 ,\cf2  \cf6 1\cf3 ,\cf2  \cf6 2\cf3 ,\cf2  \cf6 60\cf3 ),\cf2 \
+		mul: amount*\cf6 0.52\cf2 \
+	\cf3 )\cf2 \
+	+ \cf4 LPF\cf3 .\cf2 ar\cf3 (\cf2  \
+		\cf4 WhiteNoise\cf3 .\cf2 ar\cf3 (\cf2 amount\cf3 ),\cf2 \
+		freq: amount\cf3 .\cf2 linlin\cf3 (\cf6 0\cf3 ,\cf2  \cf6 1\cf3 ,\cf2  \cf6 2\cf3 ,\cf2  \cf6 60\cf3 )\cf2 \
+	\cf3 );\cf2 \
+	\
+	fade = \cf4 IEnvGen\cf3 .\cf2 kr\cf3 (\cf4 Env\cf3 ([\cf6 0\cf3 ,\cf2  \cf6 1\cf3 ,\cf2  \cf6 1\cf3 ],[\cf6 0.2\cf3 ,\cf2  \cf6 0.8\cf3 ]),\cf2  amount\cf3 ).\cf2 linlin\cf3 (\cf6 0\cf3 ,\cf2  \cf6 1\cf3 ,\cf2  \cf6 -1\cf3 ,\cf2  \cf6 1\cf3 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\
+	sig = \cf4 PlayBuf\cf3 .\cf2 ar\cf3 (\cf6 2\cf3 ,\cf2  b\cf3 ,\cf2  rate:0.5, loop:\cf6 1\cf3 );\cf2 \
+	sig = \cf4 LPF\cf3 .\cf2 ar\cf3 (\cf2 \
+		\cf4 Compander\cf3 .\cf2 ar\cf3 (\cf2 sig\cf3 ,\cf2  sig\cf3 ,\cf2  \cf6 0.1\cf3 ,\cf2  \cf6 1.0\cf3 ,\cf2  \cf6 0.05\cf3 )\cf2 *\cf6 10\cf3 ,\cf2 \
+		amount\cf3 .\cf2 range\cf3 (\cf6 500\cf3 ,\cf2  \cf6 1000\cf3 )\cf2 \
+	\cf3 )\cf2  + \cf3 (\cf2 noiseAddition * \cf6 0.4\cf3 );\cf2 \
+	\
+	amp = \cf4 Amplitude\cf3 .\cf2 ar\cf3 (\cf2 sig\cf3 ,\cf2  ampSmooth\cf3 ,\cf2  ampSmooth\cf3 );\cf2 \
+	\cf4 Out\cf3 .\cf2 kr\cf3 (\cf6 0\cf3 ,\cf2  amp\cf3 );\cf2 \
+	\
+	filteredSig = filterFreqs\cf3 .\cf2 sum\cf3 (\{\cf2 \
+		\cf7 | f |\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 		rq = amount\cf3 .\cf2 linexp\cf3 (\cf6 0\cf3 ,\cf2  \cf6 1\cf3 ,\cf2  f/\cf6 2\cf3 ,\cf2  \cf6 0.001\cf3 )\cf2  / f \cf3 ;\cf2 \
+		\cf4 BBandPass\cf3 .\cf2 ar\cf3 (\cf4 BBandPass\cf3 .\cf2 ar\cf3 (\cf2 sig\cf3 ,\cf2  f\cf3 ,\cf2  rq\cf3 ),\cf2  f\cf3 ,\cf2  rq\cf3 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\cf3 \});\cf2 \
+	\
+	filteredSigAmp = max\cf3 (\cf6 0.000001\cf3 ,\cf2  \cf4 Amplitude\cf3 .\cf2 ar\cf3 (\cf2 filteredSig\cf3 ,\cf2  ampSmooth\cf3 ,\cf2  ampSmooth\cf3 ));\cf2 \
+	\cf4 Out\cf3 .\cf2 kr\cf3 (\cf6 1\cf3 ,\cf2  filteredSigAmp\cf3 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\cf4 Out\cf3 .\cf2 kr\cf3 (\cf6 2\cf3 ,\cf2  min\cf3 (\cf6 20000\cf3 ,\cf2  \cf3 (\cf2 amp / filteredSigAmp\cf3 )));\cf2 \
+	\
+	filteredSig = filteredSig * min\cf3 (\cf6 20000\cf3 ,\cf2  \cf3 (\cf2 amp / filteredSigAmp\cf3 ));\cf2 \
+	filteredSig = filteredSig + noiseAddition\cf3 ;\cf2 \
+	filteredSig = \cf4 Compander\cf3 .\cf2 ar\cf3 (\cf2 filteredSig\cf3 ,\cf2  filteredSig\cf3 ,\cf2  \
+		thresh: \cf6 0.6\cf3 ,\cf2 \
+		slopeBelow: \cf6 0.8\cf3 ,\cf2 \
+		slopeAbove: \cf6 0.001\cf2 \
+	\cf3 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf2 	\
+	\cf4 Out\cf3 .\cf2 ar\cf3 ([\cf2 out\cf3 ,\cf2  out+\cf6 1\cf3 ],\cf2  filteredSig\cf3 );\cf2 \
+\cf3 \};\cf2 \
+\
+n\cf3 .\cf2 fadeTime = \cf6 10\cf3 ;\cf2 \
+n\cf3 .\cf2 set\cf3 (\cf8 \\ampSmooth\cf3 ,\cf2  \cf6 0.15\cf3 );\cf2 \
+n\cf3 .\cf2 set\cf3 (\cf8 \\fMult\cf3 ,\cf2  \cf6 1\cf3 );\cf2 \
+\
+n\cf3 .\cf2 objects\cf3 [\cf6 0\cf3 ].\cf2 synthDef\cf3 .\cf2 draw\cf3 ;\cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf4 Bus\cf3 (\cf8 \\control\cf3 ,\cf2  \cf6 0\cf3 ,\cf2  \cf6 3\cf3 ).\cf2 debugScope\cf3 (\cf5 "puff"\cf3 ,\cf2  \cf3 [\cf5 "in amp"\cf3 ,\cf2  \cf5 "filtered amp"\cf3 ,\cf2  \cf5 "div"\cf3 ]);\cf2 \
+\
+s\cf3 .\cf2 sendMsg\cf3 (\cf6 10\cf3 ,\cf2  \cf6 1002\cf3 )}

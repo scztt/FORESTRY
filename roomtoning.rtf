@@ -1,0 +1,240 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf320
+{\fonttbl\f0\fnil\fcharset0 DejaVuSansMono;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green102\blue0;\red77\green77\blue77;
+\red0\green0\blue179;\red128\green0\blue0;\red255\green102\blue0;\red179\green0\blue179;\red0\green0\blue255;
+}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f0\fs24 \cf2 \
+\cf3 /* Not used\
+	s = Server.internal.boot;\
+	p = DualEnvir.all;\
+*/\cf2 \
+\
+ \cf3 // Execute one time\cf2 \
+\cf4 (\cf2 \
+	\cf5 DualEnvir\cf4 .\cf2 new\cf4 (\cf2 s\cf4 ,\cf2  \cf6 \\roomtoning\cf4 );\cf2 \
+	p\cf4 [\cf6 \\roomtoning\cf4 ].\cf2 push\cf4 ;\cf2 \
+	\
+	\cf7 ~o_bformat\cf2  = \cf5 Bus\cf4 .\cf2 audio\cf4 (\cf2 s\cf4 ,\cf2  \cf8 4\cf4 );\cf2 \
+	\cf7 ~o_rotateBusses\cf2  = \cf5 Bus\cf4 .\cf2 audio\cf4 (\cf2 s\cf4 ,\cf2  \cf8 4\cf4 );\cf2 \
+\cf4 )\cf2 \
+\
+\cf4 (\cf2 \ul \ulc2 *\ulc0 roomtoning-setup\cf4 \ulnone )\cf2 \
+\
+g = \cf5 GroupManager\cf4 .\cf2 newStructure\cf4 (\cf2  s\cf4 ,\cf2  \cf4 [\cf2 \
+	\cf6 \\synths\cf4 ,\cf2 \
+	\cf6 \\globalEffects\cf4 ,\cf2 \
+	\cf6 \\panning\cf4 ,\cf2 \
+	\cf6 \\output\cf2 \
+\cf4 ]);\cf2 \
+g\cf4 .\cf2 play\cf4 ;\cf2 \
+\
+\cf7 ~n_reverb\cf4 .\cf2 free\
+\cf7 ~n_reverb\cf2  = \cf4 \{\cf2 \
+	\cf9 var\cf2  in\cf4 ,\cf2  sig\cf4 ;\cf2 \
+	in = \cf5 In\cf4 .\cf2 ar\cf4 (\cf7 ~o_rotateBusses\cf4 .\cf2 index\cf4 ,\cf2  \cf8 4\cf4 );\cf2 \
+	sig = \cf4 [\cf2 \
+		\cf5 GVerb\cf4 .\cf2 ar\cf4 ([\cf2 in\cf4 [\cf8 0\cf4 ],\cf2  in\cf4 [\cf8 1\cf4 ]],\cf2  revtime: \cf8 25\cf4 ,\cf2  damping: \cf8 0.1\cf4 ),\cf2 \
+		\cf5 GVerb\cf4 .\cf2 ar\cf4 ([\cf2 in\cf4 [\cf8 2\cf4 ],\cf2  in\cf4 [\cf8 3\cf4 ]],\cf2  revtime: \cf8 25\cf4 ,\cf2  damping: \cf8 0.2\cf4 )\cf2 \
+	\cf4 ].\cf2 flatten\cf4 ;\cf2 \
+	\cf5 Out\cf4 .\cf2 ar\cf4 (\cf7 ~o_rotateBusses\cf4 ,\cf2  sig * \cf8 0.1\cf4 );\cf2 \
+\cf4 \}.\cf2 play\cf4 (\cf2 target: g\cf4 .\cf2 globalEffects\cf4 );\cf2 \
+	\
+\cf7 ~n_fdelay\cf4 .\cf2 free\cf4 ;\cf2 \
+\cf7 ~n_fdelay\cf2  = \cf4 \{\cf2 \
+	\cf9 var\cf2  in\cf4 ,\cf2  dust\cf4 ;\cf2 \
+	in = \cf5 DelayC\cf4 .\cf2 ar\cf4 (\cf5 LocalIn\cf4 .\cf2 ar\cf4 (\cf8 4\cf4 ),\cf2  \cf8 4\cf4 ,\cf2  \cf4 \{\cf2  \cf5 LFNoise2\cf4 .\cf2 kr\cf4 (\cf8 0.005\cf4 ).\cf2 range\cf4 (\cf8 0.2\cf4 ,\cf8 1\cf4 )\cf2  \cf4 \});\cf2 \
+	in = \cf5 LeakDC\cf4 .\cf2 ar\cf4 (\cf2 in\cf4 );\cf2 \
+	in = in + \cf5 In\cf4 .\cf2 ar\cf4 (\cf7 ~o_rotateBusses\cf4 .\cf2 index\cf4 ,\cf2  \cf8 4\cf4 );\cf2 \
+	\
+	\cf3 // Filter\cf2 \
+	in = \cf5 HPF\cf4 .\cf2 ar\cf4 (\cf5 LPF\cf4 .\cf2 ar\cf4 (\cf2 in\cf4 ,\cf2  \cf8 1000\cf4 ),\cf2  \cf8 50\cf4 );\cf2 \
+	\
+	\cf3 // Noise mod\cf2 \
+	in = in * \cf4 (\cf8 1 \cf2 + \cf5 HPF\cf4 .\cf2 ar\cf4 (\cf5 WhiteNoise\cf4 .\cf2 ar\cf4 (\cf8 0.05\cf4 ),\cf2  \cf8 1000\cf4 ));\cf2 \
+	\
+	\cf3 // Dust mod\cf2 \
+	dust = \cf4 (\cf5 Dust\cf4 .\cf2 ar\cf4 (\cf8 0.7\cf4 )\cf2 *\cf8 4\cf4 )\cf2  + \cf4 (\cf8 0.1 \cf2 * \cf5 Dust\cf4 .\cf2 ar\cf4 (\cf8 8\cf4 ));\cf2 \
+	in = in * \cf4 (\cf8 1 \cf2 - \cf4 T\cf2 rig\cf4 .\cf2 ar\cf4 (\cf2 dust\cf4 ,\cf2  \cf5 Gate\cf4 .\cf2 ar\cf4 (\cf2 dust\cf4 ,\cf2  dust\cf4 )));\cf2 \
+	\
+	\cf3 // Saw mod\cf2 \
+	in = in * \cf4 (\cf8 1 \cf2 - \cf4 M\cf2 ix\cf4 (\cf5 Saw\cf4 .\cf2 ar\cf4 ([\cf8 300\cf4 ,\cf8 450\cf4 ,\cf8 600\cf4 ],\cf2  \cf8 0.06\cf4 )));\cf2 \
+	\
+	\cf5 LocalOut\cf4 .\cf2 ar\cf4 (\cf2 in\cf4 );\cf2 \
+	\cf5 Out\cf4 .\cf2 ar\cf4 (\cf7 ~o_rotateBusses\cf4 ,\cf2  in * \cf8 0.5\cf4 );\cf2 \
+\cf4 \}.\cf2 play\cf4 (\cf2 target: g\cf4 .\cf2 globalEffects\cf4 );\cf2 \
+\
+\cf7 ~n_rotater\cf2  = \cf4 \{\cf2 \
+	\cf9 |freq=0.1|\cf2 \
+	\cf9 var\cf2  in\cf4 ,\cf2  saw\cf4 ,\cf2  sig\cf4 ;\cf2 \
+	in = \cf5 In\cf4 .\cf2 ar\cf4 (\cf7 ~o_rotateBusses\cf4 .\cf2 index\cf4 ,\cf2  \cf8 4\cf4 );\cf2 \
+	sig = in\cf4 .\cf2 sum\cf4 (\{\cf2 \
+		\cf9 |inChannel, i|\cf2 \
+		\cf5 PanB2\cf4 .\cf2 ar\cf4 (\cf2 inChannel\cf4 ,\cf2  \cf5 LFSaw\cf4 .\cf2 ar\cf4 (\cf2 freq\cf4 ,\cf2  i\cf4 .\cf2 linlin\cf4 (\cf8 0\cf4 ,\cf2  \cf8 3\cf4 ,\cf2  \cf8 0.25\cf4 ,\cf2  \cf8 1.75\cf4 )));\cf2 \
+	\cf4 \});\cf2 \
+	\cf5 Out\cf4 .\cf2 ar\cf4 (\cf7 ~o_bformat\cf4 ,\cf2  sig\cf4 .\cf2 perfectShuffle\cf4 );\cf2 \
+\cf4 \}.\cf2 play\cf4 (\cf2 target: g\cf4 .\cf2 panning\cf4 );\cf2 \
+\
+\cf7 ~n_toHeadphone\cf2  = \cf4 \{\cf2 \
+	\cf9 var\cf2  in\cf4 ;\cf2 \
+	in = \cf5 In\cf4 .\cf2 ar\cf4 (\cf7 ~o_bformat\cf4 .\cf2 index\cf4 ,\cf2  \cf8 4\cf4 );\cf2 \
+	\cf5 Out\cf4 .\cf2 ar\cf4 (\cf8 0\cf4 ,\cf2  \cf5 B2UHJ\cf4 .\cf2 ar\cf4 (\cf2 *in\cf4 ));\cf2 \
+\cf4 \}.\cf2 play\cf4 (\cf2 target: g\cf4 .\cf2 output\cf4 );\cf2 \
+\
+\cf7 ~tone\cf4 .\cf2 clear\cf4 ;\cf2 \
+\cf7 ~tone\cf2  = \cf4 \{\cf2 \
+	\cf9 |buffer, speed=1.0, overlap=0.2|\cf2 \
+	\cf9 var\cf2  duration\cf4 ,\cf2  pos\cf4 ,\cf2  fade\cf4 ,\cf2  xfade=\cf8 0\cf4 ,\cf2  xfadeTrig\cf4 ,\cf2  \
+		ampEnv\cf4 ,\cf2  posEnv\cf4 ,\cf2  rampDur\cf4 ,\cf2  holdDur\cf4 ,\cf2  frames\cf4 ,\cf2  envFrames\cf4 ;\cf2 \
+	\cf9 var\cf2  tone1\cf4 ,\cf2  tone1Trig\cf4 ,\cf2  tone1Amp\cf4 ,\cf2  tone1Pos\cf4 ,\cf2 \
+		tone2\cf4 ,\cf2  tone2Trig\cf4 ,\cf2  tone2Amp\cf4 ,\cf2  tone2Pos\cf4 ,\cf2 \
+		tone\cf4 ;\cf2 \
+	\cf9 var\cf2  eqTone\cf4 ;\cf2 \
+	\
+	buffer = \cf7 ~d_buffers\cf4 [\cf6 'room-tone'\cf4 ].\cf2 bufnum\cf4 ;\cf2 \
+	\
+	duration = \cf5 BufDur\cf4 .\cf2 kr\cf4 (\cf2 buffer\cf4 );\cf2 \
+	frames = \cf5 BufFrames\cf4 .\cf2 kr\cf4 (\cf2 buffer\cf4 );\cf2 \
+		\
+	rampDur = frames * overlap / \cf8 2\cf4 ;\cf2 \
+	holdDur = frames * \cf4 (\cf8 1.0 \cf2 - \cf4 o\cf2 verlap\cf4 );\cf2 \
+	ampEnv = \cf5 InterplEnv\cf4 ([\cf8 0\cf4 ,\cf2  \cf8 1\cf4 ,\cf2  \cf8 1\cf4 ,\cf2  \cf8 0\cf4 ,\cf2  \cf8 0\cf4 ],\cf2  \cf4 [\cf2 rampDur\cf4 ,\cf2  holdDur\cf4 ,\cf2  rampDur\cf4 ,\cf2  holdDur\cf4 ]);\cf2 \
+	\
+	envFrames = \cf4 (\cf2 rampDur + holdDur\cf4 )\cf2  * \cf8 2\cf4 ;\cf2 \
+	tone1Pos = \cf5 Phasor\cf4 .\cf2 ar\cf4 (\cf8 1\cf4 ,\cf2  \cf5 BufRateScale\cf4 .\cf2 kr\cf4 (\cf2 buffer\cf4 )\cf2  * speed\cf4 ,\cf2  \
+		start:\cf8 0\cf4 ,\cf2  end:envFrames\cf4 );\cf2 \
+	tone2Pos = \cf5 Phasor\cf4 .\cf2 ar\cf4 (\cf8 1\cf4 ,\cf2  \cf5 BufRateScale\cf4 .\cf2 kr\cf4 (\cf2 buffer\cf4 )\cf2  * speed\cf4 ,\cf2  \
+		start:\cf8 0\cf4 ,\cf2  end:envFrames\cf4 )\cf2  + \cf4 (\cf2 envFrames / \cf8 2\cf4 )\cf2  % envFrames\cf4 ;\cf2 \
+\
+	tone1Amp = \cf5 IEnvGen\cf4 .\cf2 ar\cf4 (\cf2 ampEnv\cf4 ,\cf2  tone1Pos\cf4 );\cf2 \
+	tone2Amp = \cf8 1.0 \cf2 - \cf4 t\cf2 one1Amp\cf4 ;\cf2 \
+\
+	tone1 = \cf5 BufRd\cf4 .\cf2 ar\cf4 (\cf8 2\cf4 ,\cf2  buffer\cf4 ,\cf2  phase: tone1Pos\cf4 );\cf2 \
+	tone2 = \cf5 BufRd\cf4 .\cf2 ar\cf4 (\cf8 2\cf4 ,\cf2  buffer\cf4 ,\cf2  phase: tone2Pos\cf4 );\cf2 	\
+	\cf5 Out\cf4 .\cf2 kr\cf4 (\cf8 0\cf4 ,\cf2  \cf4 [\cf2 tone1Amp\cf4 ,\cf2  tone1Pos\cf4 ,\cf2  tone2Amp\cf4 ,\cf2  tone2Pos\cf4 ]);\cf2 \
+		\
+	tone = \cf5 XFade2\cf4 .\cf2 ar\cf4 (\cf2 tone2\cf4 ,\cf2  tone1\cf4 ,\cf2  tone1Amp * \cf8 2 - 1\cf4 )\cf2  * \cf8 -6\cf4 .\cf2 dbamp\cf4 ;\cf2 \
+	\
+	\cf3 // Dust\cf2 \
+	tone = \cf4 (\cf2 tone ! \cf8 2\cf4 ).\cf2 flatten\cf4 ;\cf2 \
+	tone = tone\cf4 .\cf2 collect\cf4 (\{\cf2  \cf9 |sig|\cf2  sig + \cf4 (\cf8 0.1 \cf2 * \cf5 Dust\cf4 .\cf2 ar\cf4 (\cf8 0.1\cf4 ))\cf2  \cf4 \});\cf2 \
+	tone = \cf5 DelayN\cf4 .\cf2 ar\cf4 (\cf2 tone\cf4 ,\cf2  \cf8 5\cf4 ,\cf2  \cf4 [\cf8 0\cf4 ,\cf2  \cf8 0.333\cf4 ,\cf2  \cf8 1.444\cf4 ,\cf2  \cf8 2.777\cf4 ]);\cf2 \
+\cf4 \};\cf2 \
+\cf7 ~tone\cf4 .\cf2 parentGroup_\cf4 (\cf2 g\cf4 .\cf2 synths\cf4 );\cf2 \
+\cf7 ~tone\cf4 .\cf2 play\cf4 (\cf2 out: \cf7 ~o_rotateBusses\cf4 );\cf2 \
+\
+\cf7 ~b_hist\cf2  = \cf5 Buffer\cf4 .\cf2 alloc\cf4 (\cf2 s\cf4 ,\cf2  s\cf4 .\cf2 sampleRate * \cf8 40\cf4 ,\cf2  \cf8 1\cf4 );\cf2 \
+\cf7 ~b_hist\cf4 .\cf2 play\
+\cf7 ~bufff\cf4 .\cf2 clear\
+\cf7 ~bufff\cf2  = \cf4 \{\cf2 \
+	\cf9 | rate, freq, length, position |\cf2 \
+	\cf9 var\cf2  b\cf4 ,\cf2  in\cf4 ,\cf2  phase\cf4 ,\cf2  oscPhase\cf4 ,\cf2  trigImpulse\cf4 ,\cf2  amp\cf4 ,\cf2  sig\cf4 ;\cf2 \
+	b = \cf7 ~b_hist\cf4 .\cf2 bufnum\cf4 ;\cf2 \
+	in = \cf5 InFeedback\cf4 .\cf2 ar\cf4 (\cf7 ~o_rotateBusses\cf4 );\cf2 \
+	\
+	phase = \cf5 Phasor\cf4 .\cf2 ar\cf4 (\cf8 1\cf4 ,\cf2  \cf5 BufRateScale\cf4 .\cf2 kr\cf4 (\cf2 b\cf4 ),\cf2  \cf8 0\cf4 ,\cf2  \cf5 BufFrames\cf4 .\cf2 kr\cf4 (\cf2 b\cf4 ));\cf2 \
+	\cf5 BufWr\cf4 .\cf2 ar\cf4 (\cf2 in\cf4 ,\cf2  b\cf4 ,\cf2  phase\cf4 );\cf2 \
+	\
+	\
+	rate = \cf8 1\cf4 ;\cf2 \
+	position = \cf5 MouseX\cf4 .\cf2 kr\cf4 (\cf8 0\cf4 ,\cf2  \cf8 1\cf4 );\cf2 \
+	freq = \cf5 MouseY\cf4 .\cf2 kr\cf4 (\cf8 1\cf4 ,\cf2  \cf8 100\cf4 );\cf2 \
+	amp = \cf5 LagUD\cf4 .\cf2 kr\cf4 (\cf5 Slope\cf4 .\cf2 kr\cf4 (\cf5 MouseX\cf4 .\cf2 kr\cf4 .\cf2 pow\cf4 (\cf8 2\cf4 )\cf2  + \cf5 MouseY\cf4 .\cf2 kr\cf4 .\cf2 pow\cf4 (\cf8 2\cf4 )),\cf2  \cf8 0.001\cf4 ,\cf2  \cf8 12\cf4 );\cf2 \
+	trigImpulse = \cf5 Impulse\cf4 .\cf2 ar\cf4 (\cf2 freq\cf4 );\cf2 \
+	oscPhase = \cf5 Phasor\cf4 .\cf2 ar\cf4 (\cf2 trigImpulse\cf4 ,\cf2  \cf5 BufRateScale\cf4 .\cf2 kr\cf4 (\cf2 b\cf4 )\cf2  * rate\cf4 ,\cf2  position * \cf5 BufFrames\cf4 .\cf2 kr\cf4 (\cf2 b\cf4 ),\cf2  \cf5 BufFrames\cf4 .\cf2 kr\cf4 (\cf2 b\cf4 ));\cf2 \
+	sig = \cf8 0.1 \cf2 * amp * \cf5 BufRd\cf4 .\cf2 ar\cf4 (\cf8 1\cf4 ,\cf2  b\cf4 ,\cf2  oscPhase\cf4 ,\cf2  interpolation:\cf8 4\cf4 );\cf2 \
+	\
+	sig = sig * \cf5 SinOsc\cf4 .\cf2 ar\cf4 (\cf8 660 \cf2 + \cf5 SinOsc\cf4 .\cf2 ar\cf4 (\cf8 60\cf4 ).\cf2 range\cf4 (\cf8 -10\cf4 ,\cf8 10\cf4 ))\cf2 \
+\cf4 \};\cf2 \
+\cf7 ~bufff\cf4 .\cf2 parentGroup_\cf4 (\cf2 g\cf4 .\cf2 synths\cf4 );\cf2 \
+\cf7 ~bufff\cf4 .\cf2 play\cf4 (\cf2 out: \cf7 ~o_rotateBusses\cf4 );\cf2 \
+\
+\
+\cf5 SynthDef\cf4 (\cf6 \\fadeTone\cf4 ,\cf2  \cf4 \{\cf2 \
+	\cf9 | out=0, amp=0, buffer, freqMult=1.0, fadeAmt=0.5 |\cf2 \
+	\cf9 var\cf2  dur\cf4 ,\cf2  frames\cf4 ,\cf2  totalDur\cf4 ,\cf2  ampEnv\cf4 ,\cf2  pos\cf4 ,\cf2  sig\cf4 ;\cf2 \
+	\
+	totalDur = \cf5 BufDur\cf4 .\cf2 kr\cf4 (\cf2 buffer\cf4 );\cf2 \
+	dur = freqMult\cf4 .\cf2 reciprocal * totalDur * fadeAmt\cf4 ;\cf2 \
+	frames = \cf5 BufFrames\cf4 .\cf2 kr\cf4 (\cf2 buffer\cf4 );\cf2 \
+\
+	freqMult = freqMult + \cf5 LFNoise2\cf4 .\cf2 kr\cf4 (\cf8 0.1\cf4 ).\cf2 range\cf4 (\cf8 -0.01\cf4 ,\cf8 0.01\cf4 );\cf2 \
+	\
+	pos = \cf5 Phasor\cf4 .\cf2 ar\cf4 (\cf8 0\cf4 ,\cf2  \cf5 BufRateScale\cf4 .\cf2 kr\cf4 (\cf2 buffer\cf4 )\cf2  * freqMult\cf4 ,\cf2  \
+		start: \cf8 0\cf4 ,\cf2  end: frames + \cf8 9999\cf4 );\cf2 \
+		\
+	\
+	ampEnv = \cf5 IEnvGen\cf4 .\cf2 kr\cf4 (\cf5 InterplEnv\cf4 ([\cf8 0\cf4 ,\cf2  \cf8 1\cf4 ,\cf2  \cf8 1\cf4 ,\cf2  \cf8 0\cf4 ],\cf2  \cf4 [\cf8 0.3\cf4 ,\cf2  \cf8 0.2\cf4 ,\cf2  \cf8 0.5\cf4 ]\cf2  * frames * fadeAmt\cf4 ),\cf2  pos\cf4 );\cf2 \
+	sig = ampEnv * \cf5 BufRd\cf4 .\cf2 ar\cf4 (\cf8 4\cf4 ,\cf2  buffer\cf4 ,\cf2  frames - pos\cf4 ,\cf2  interpolation:\cf8 4\cf4 );\cf2 \
+\
+	\cf5 FreeSelf\cf4 .\cf2 kr\cf4 ((\cf2 pos - \cf4 (\cf2 frames * fadeAmt\cf4 )));\cf2 \
+	\cf5 Out\cf4 .\cf2 ar\cf4 (\cf2 out\cf4 ,\cf2  sig\cf4 );\cf2 \
+\cf4 \}).\cf2 add\cf4 ;\cf2 \
+\
+\cf7 ~f_doFadeTone\cf2  = \cf4 \{\cf2 \
+	\cf9 |bufferName, amp=1, freq, fadeAmt = 0.3|\cf2 \
+	\cf9 var\cf2  buffer\cf4 ,\cf2  originalFreq\cf4 ,\cf2  freqMultiplier\cf4 ;\cf2 \
+	buffer = \cf7 ~d_buffers\cf4 [\cf2 bufferName\cf4 ];\cf2 \
+	originalFreq = \cf7 ~d_note_dict\cf4 [\cf2 bufferName\cf4 ]\cf2  ? \cf8 440\cf4 ;\cf2 \
+	\
+	if \cf4 (\cf2 buffer\cf4 .\cf2 notNil && originalFreq\cf4 .\cf2 notNil\cf4 )\cf2 \
+	\cf4 \{\cf2 \
+		freq = freq ? originalFreq\cf4 ;\cf2 \
+		freqMultiplier = freq / originalFreq\cf4 ;\cf2 \
+		\cf5 Synth\cf4 (\cf6 \\fadeTone\cf4 ,\cf2  \cf4 [\cf2 \
+			\cf6 \\out\cf4 ,\cf2  \cf7 ~o_rotateBusses\cf4 ,\cf2 \
+			\cf6 \\amp\cf4 ,\cf2  amp\cf4 ,\cf2 \
+			\cf6 \\buffer\cf4 ,\cf2  buffer\cf4 .\cf2 bufnum\cf4 ,\cf2  \
+			\cf6 \\freqMult\cf4 ,\cf2  freqMultiplier\cf4 ,\cf2 \
+			\cf6 \\fadeAmt\cf4 ,\cf2  fadeAmt\
+		\cf4 ],\cf2  \
+		target: g\cf4 .\cf2 synths\cf4 );\cf2 \
+	\cf4 \};\cf2 \
+\cf4 \};\cf2 \
+\
+\
+\
+\cf5 Routine\cf4 (\{\cf2 \
+	\cf4 (\cf8 33 \cf2 + \cf4 [\cf8 2\cf4 ,\cf2  \cf8 5\cf4 ,\cf2  \cf8 7\cf4 ]).\cf2 midicps\cf4 .\cf2 postln\cf4 .\cf2 do\cf4 (\{\cf2 \
+		\cf9 |f|\cf2 \
+		\cf7 ~f_doFadeTone\cf4 .(\cf6 'piano_complete-6'\cf4 ,\cf2  \cf8 24\cf4 .\cf2 dbamp\cf4 ,\cf2  f\cf4 ,\cf2  \cf8 0.9\cf4 );\cf2 \
+		\cf7 ~f_doFadeTone\cf4 .(\cf6 'piano_complete-12'\cf4 ,\cf2  \cf8 24\cf4 .\cf2 dbamp\cf4 ,\cf2  f\cf4 ,\cf2  \cf8 0.9\cf4 );\cf2 \
+		\cf8 0.4\cf4 .\cf2 yield\cf4 ;\cf2 \
+	\cf4 \});\cf2 \
+\cf4 \}).\cf2 play\cf4 ;\cf2 \
+\
+\cf7 ~f_doFadeTone\cf4 .(\cf6 'piano_complete-4'\cf4 ,\cf2  \cf8 24\cf4 .\cf2 dbamp\cf4 ,\cf2  \cf8 150\cf4 ,\cf2  \cf8 1\cf4 );\cf2 \
+\
+\
+\cf7 ~f_doFadeTone\cf4 .(\cf6 'piano_bumps-1'\cf4 ,\cf2  \cf8 140\cf4 ,\cf2  \cf8 1\cf4 )\cf2 \
+\
+\cf4 (\cf2 \
+\cf7 ~tone\cf4 .\cf2 stop\cf4 ;\cf2 \
+\cf7 ~d_buffers\cf4 [\cf6 'piano_complete-9'\cf4 ].\cf2 play\cf4 ;\cf2 \
+\cf4 )\cf2 \
+\
+\cf4 (\cf2 \
+\cf7 ~d_buffers\cf4 [\cf6 'piano_complete-4'\cf4 ].\cf2 play\cf4 ;\cf2 \
+\cf7 ~d_buffers\cf4 [\cf6 'piano_complete-10'\cf4 ].\cf2 play\cf4 ;\cf2 \
+\cf4 )\cf2 \
+\
+\
+\cf4 (\cf2 \
+\cf7 ~tone\cf4 .\cf2 play\cf4 ;\cf2 \
+\cf7 ~d_buffers\cf4 [\cf6 'piano_complete-9'\cf4 ].\cf2 play\cf4 ;\cf2 \
+\cf7 ~d_buffers\cf4 [\cf6 'piano_complete-11'\cf4 ].\cf2 play\cf4 ;\cf2 \
+\cf4 )\cf2 \
+\
+\cf4 (\cf2 \
+\cf7 ~tone\cf4 .\cf2 play\cf4 ;\cf2 \
+\cf7 ~d_buffers\cf4 [\cf6 'piano_complete-9'\cf4 ].\cf2 play\cf4 ;\cf2 \
+\cf7 ~d_buffers\cf4 [\cf6 'piano_complete-12'\cf4 ].\cf2 play\cf4 ;\cf2 \
+\cf4 )\cf2 \
+\
+\
+\cf7 ~tone\cf4 .\cf2 set\cf4 (\cf6 \\buffer\cf4 ,\cf2  \cf7 ~d_buffers\cf4 [\cf6 'room-tone'\cf4 ].\cf2 bufnum\cf4 )\cf2 \
+\cf7 ~tone\cf4 .\cf2 set\cf4 (\cf6 \\speed\cf4 ,\cf2  \cf8 1\cf4 );\cf2 \
+\cf7 ~tone\cf4 .\cf2 play\cf4 ;\cf2 \
+\
+\cf5 MasterEQ\cf4 ()}
