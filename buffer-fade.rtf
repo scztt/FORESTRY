@@ -6,17 +6,17 @@
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
 \f0\fs24 \cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 \
+\
 \cf3 // Buffer crossfader\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf4 ~out\cf2  = \cf5 Buffer\cf6 (\cf2 s\cf6 ,\cf2  \cf7 100\cf6 );\cf2 \
 \cf4 ~out\cf6 .\cf2 updateInfo\cf6 ();\cf2 \
 \cf4 ~bufs\cf2  = \cf7 10\cf6 .\cf2 collect\cf6 (\{\cf2 \
 	\cf5 Buffer\cf6 .\cf2 loadCollection\cf6 (\cf2 s\cf6 ,\cf2  \cf6 [\cf7 10\cf6 .\cf2 rand\cf6 ,\cf2  \cf7 10\cf6 .\cf2 rand\cf6 ,\cf2  \cf7 10\cf6 .\cf2 rand\cf6 ,\cf2  \cf7 10\cf6 .\cf2 rand\cf6 ,\cf2  \cf7 10\cf6 .\cf2 rand\cf6 ].\cf2 postln\cf6 .\cf2 resamp1\cf6 (\cf7 100\cf6 ).\cf2 postln\cf6 );\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf6 \});\cf2 \
 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 \
+\
 \cf6 (\cf2 \
 	\cf8 var\cf2  name=\cf9 "buffer-test"\cf6 ,\cf2  bounds\cf6 ,\cf2  minval\cf6 ,\cf2  maxval\cf6 ;\cf2 \
 	\cf8 var\cf2  plotter\cf6 ;\cf2 \
@@ -43,16 +43,93 @@
 	^plotter\
 \cf6 )\cf2 \
 \
+k = \cf5 KorgControl\cf6 (\cf2 s\cf6 ,\cf2  \cf11 \\bufferfade\cf6 );\cf2 \
+k\cf6 .\cf2 debugMode = \cf10 false\cf6 ;\cf2 \
+k\cf6 .\cf2 debugScope\cf6 ;\cf2 \
+k\cf6 .\cf2 start\cf6 ();\cf2 \
 \
-q = \cf5 QStethoscope\cf6 (\cf2 s\cf6 ,\cf2  \
-	numChannels: \cf7 1\cf6 ,\cf2  \
-	index: \cf7 13\cf6 ,\cf2  \
-	bufsize: \cf7 100\cf2 \
-\cf6 );\cf2 \
-\
-\cf4 ~out\cf6 .\cf2 getInfo\
+\cf6 (\cf2 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 \
+\cf8 var\cf2  window\cf6 ,\cf2  button\cf6 ,\cf2  \
+	buffer\cf6 ;\cf2 \
+\cf8 var\cf2  dbSpec = \cf6 [\cf7 -1\cf6 ,\cf7 1\cf6 ].\cf2 asSpec\cf6 ;\cf2 \
+\
+k\cf6 .\cf2 setSpec\cf6 (\cf11 \\knob1\cf6 ,\cf2  \cf6 [\cf7 100\cf6 ,\cf2  \cf7 8000\cf6 ,\cf2  \cf11 \\exp\cf6 ].\cf2 asSpec\cf6 );\cf2 \
+k\cf6 .\cf2 setSpec\cf6 (\cf11 \\knob2\cf6 ,\cf2  \cf6 [\cf7 0.001\cf6 ,\cf2  \cf7 0.95\cf6 ].\cf2 asSpec\cf6 );\cf2 \
+k\cf6 .\cf2 setSpec\cf6 (\cf11 \\knob3\cf6 ,\cf2  \cf6 [\cf7 0.1\cf6 ,\cf2  \cf7 35\cf6 ].\cf2 asSpec\cf6 );\cf2 \
+k\cf6 .\cf2 setSpec\cf6 (\cf11 \\knob4\cf6 ,\cf2  \cf6 [\cf7 0\cf6 ,\cf2  \cf7 1\cf6 ].\cf2 asSpec\cf6 );\cf2 \
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf4 ~buffer\cf2  = \cf5 Buffer\cf6 .\cf2 alloc\cf6 (\cf2 s\cf6 ,\cf2  \cf7 512\cf6 ,\cf2  \cf7 1\cf6 ,\cf2  bufnum:\cf7 0\cf6 );\cf2 \
+\cf4 ~buffer\cf6 .\cf2 updateInfo\cf6 ;\cf2 \
+\
+\cf4 ~music\cf2  = \cf5 Buffer\cf6 .\cf2 read\cf6 (\cf2 s\cf6 ,\cf9 "../../Documents/_sounds/Pale Star.wav"\cf6 .\cf2 resolveRelative\cf6 ,\cf2  bufnum:\cf7 1\cf6 );\cf2 \
+\
+window = \cf5 QWindow\cf6 ();\cf2 \
+\
+b = \cf5 BSpline\cf6 ([[\cf7 0\cf6 ,\cf2  \cf7 0\cf6 ],\cf2  \cf6 [\cf7 1\cf6 ,\cf2  \cf7 0\cf6 ],\cf2  \cf6 [\cf7 2\cf6 ,\cf2  \cf7 0\cf6 ]],\cf2  \cf7 6.0\cf6 );\cf2 \
+g = b\cf6 .\cf2 gui\cf6 (\cf2 window\cf6 ,\cf2  \cf10 nil\cf6 ,\cf2  \cf5 ControlSpec\cf6 (\cf7 -5\cf6 ,\cf2  \cf7 5\cf6 ,\cf2  \cf11 \\db\cf6 ,\cf2  units:\cf9 "dB"\cf6 ),\cf2  \cf5 ControlSpec\cf6 (\cf7 0\cf6 ,\cf2  \cf7 2\cf6 ));\cf2 \
+g\cf6 .\cf2 orderSpec = \cf6 [\cf7 2\cf6 ,\cf2  \cf7 100\cf6 ,\cf2  \cf11 \\exponential\cf6 ].\cf2 asSpec\cf6 ;\cf2 \
+\
+button = \cf5 QButton\cf6 (\cf2 window\cf6 )\cf2 \
+	\cf6 .\cf2 action_\cf6 (\{\cf2 \
+		\cf8 var\cf2  table\cf6 ,\cf2  values\cf6 ;\cf2 \
+		values = \cf5 Signal\cf6 .\cf2 newFrom\cf6 (\cf2 b\cf6 .\cf2 bilinearInterpolate\cf6 (\cf7 256\cf6 ).\cf2 collect\cf6 (\{\cf2 \
+			\cf8 | y, i |\cf2 \
+			\cf6 (\cf2 dbSpec\cf6 .\cf2 map\cf6 (\cf2 i/\cf7 256\cf6 )\cf2  + y\cf6 );\cf2 \
+		\cf6 \}));\cf2 \
+		\cf4 ~buffer\cf6 .\cf2 sendCollection\cf6 (\cf2 values\cf6 .\cf2 asWavetableNoWrap\cf6 );\cf2 \
+	\cf6 \});\cf2 \
+\
+window\cf6 .\cf2 layout = \cf5 VLayout\cf6 (\cf2 g\cf6 .\cf2 view\cf6 ,\cf2  button\cf6 );\cf2 \
+window\cf6 .\cf2 layout\cf6 .\cf2 spacing = \cf7 20\cf6 ;\cf2 \
+window\cf6 .\cf2 layout\cf6 .\cf2 margins = \cf6 [\cf7 10\cf6 ,\cf2  \cf7 30\cf6 ,\cf2  \cf7 10\cf6 ,\cf2  \cf7 30\cf6 ];\cf2 \
+window\cf6 .\cf2 front\cf6 ;\cf2 \
+\
+p = b\cf6 .\cf2 bilinearInterpolate\cf6 (\cf7 256\cf6 ).\cf2 plot\cf6 (\cf2 minval:\cf7 -16\cf6 .\cf2 dbamp\cf6 ,\cf2  maxval:\cf7 16\cf6 .\cf2 dbamp\cf6 );\cf2 \
+\
+b\cf6 .\cf2 addDependant\cf6 (\cf2 f = \cf6 \{\cf2 \
+	p\cf6 .\cf2 value = b\cf6 .\cf2 bilinearInterpolate\cf6 (\cf7 256\cf6 ).\cf2 collect\cf6 (\{\cf2 \
+		\cf8 | y, i |\cf2  \
+		\cf8 var\cf2  finaldB = dbSpec\cf6 .\cf2 map\cf6 (\cf2 i/\cf7 256\cf6 )\cf2  + y\cf6 .\cf2 dbamp\cf6 ;\cf2 \
+		finaldB\cf6 ;\cf2 \
+	\cf6 \});\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf6 \});\cf2 \
+\
+n = \cf6 \{\cf2 \
+	\cf8 | freq = 500, width = 0.5, preamp = 5, amt = 1 |\cf2 \
+	\cf8 var\cf2  amp\cf6 ,\cf2  inSig\cf6 ,\cf2  lowPassSig\cf6 ,\cf2  highPassSig\cf6 ,\cf2  shapeSig\cf6 ,\cf2  outSig\cf6 ;\cf2 \
+	\
+	inSig = \cf5 PlayBuf\cf6 .\cf2 ar\cf6 (\cf7 1\cf6 ,\cf2  \cf4 ~music\cf6 .\cf2 bufnum\cf6 ,\cf2  rate:\cf7 0.4\cf6 ,\cf2  loop:\cf7 1\cf6 )\cf2  * \cf6 [\cf7 1\cf6 ,\cf7 1\cf6 ];\cf2 \
+	inSig = \cf5 SinOsc\cf6 .\cf2 ar\cf6 (\cf5 Array\cf6 .\cf2 linrand\cf6 (\cf7 30\cf6 ,\cf2  \cf7 30\cf6 ,\cf2  \cf7 330\cf6 ),\cf2  \cf5 Array\cf6 .\cf2 linrand\cf6 (\cf7 30\cf6 ,\cf2  \cf7 0\cf6 ,\cf2  \cf7 1\cf6 )).\cf2 sum * \cf7 (1/30) * [1, 1]\cf6 ;\cf2 \
+\
+\cf3 //	highPassSig = BHiPass.ar(inSig, cutoff);\cf2 \
+\cf3 //	lowPassSig = BLowPass.ar(inSig, cutoff);\cf2 \
+\
+	width = width * freq\cf6 ;\cf2 \
+	highPassSig = \cf5 BPeakEQ\cf6 .\cf2 ar\cf6 (\cf2 inSig\cf6 ,\cf2  freq\cf6 ,\cf2  width/freq\cf6 ,\cf2  preamp\cf6 .\cf2 neg\cf6 );\cf2 \
+	lowPassSig = inSig - highPassSig\cf6 ;\cf2  \
+\
+	amp = \cf5 PeakFollower\cf6 .\cf2 ar\cf6 (\cf2 lowPassSig\cf6 ,\cf2  \cf7 0.999\cf6 ).\cf2 max\cf6 (\cf7 -128\cf6 .\cf2 dbamp\cf6 );\cf2 \
+\
+	shapeSig = \cf6 (\cf2 lowPassSig / amp\cf6 );\cf2  	\
+	shapeSig = \cf5 Shaper\cf6 .\cf2 ar\cf6 (\cf4 ~buffer\cf6 .\cf2 bufnum\cf6 ,\cf2  shapeSig\cf6 );\cf2 \
+	shapeSig = \cf6 (\cf2 shapeSig * amp\cf6 );\cf2 \
+	shapeSig = \cf5 BLowPass\cf6 .\cf2 ar\cf6 (\cf2 shapeSig\cf6 ,\cf2  freq*\cf7 2\cf6 );\cf2 \
+	\
+	outSig = \
+		\cf5 XFade2\cf6 .\cf2 ar\cf6 (\cf2 lowPassSig\cf6 ,\cf2  shapeSig\cf6 ,\cf2  amt*\cf7 2-1\cf6 );\cf2 \
+		\
+	outSig\cf6 ;\cf2 \
+\cf6 \}.\cf2 play\cf6 (\cf2 args: \cf6 [\cf11 \\freq\cf6 ,\cf2  k\cf6 .\cf2 asMap\cf6 (\cf11 \\knob1\cf6 ),\cf2  \cf11 \\width\cf6 ,\cf2  k\cf6 .\cf2 asMap\cf6 (\cf11 \\knob2\cf6 ),\cf2  \cf11 \\preamp\cf6 ,\cf2  k\cf6 .\cf2 asMap\cf6 (\cf11 \\knob3\cf6 ),\cf2  \cf11 \\amt\cf6 ,\cf2  k\cf6 .\cf2 asMap\cf6 (\cf11 \\knob4\cf6 )]);\cf2 \
+\
+window\cf6 .\cf2 onClose_\cf6 (\{\cf2  n\cf6 .\cf2 free\cf6 ;\cf2  p\cf6 .\cf2 parent\cf6 .\cf2 close\cf6 ();\});\cf2 \
+\cf5 CmdPeriod\cf6 .\cf2 doOnce\cf6 (\{\cf2  window\cf6 .\cf2 close\cf6 ()\cf2  \cf6 \});\cf2 \
+n\cf6 .\cf2 trace\cf6 ;\cf2 \
+\cf6 )\cf2 \
+\
 d = \cf5 SynthDef\cf6 (\cf11 \\bufferFade\cf6 ,\cf2  \cf6 \{\cf2 \
 	\cf8 var\cf2  phase\cf6 ,\cf2  sig\cf6 ;\cf2 \
 	phase = \cf5 Phasor\cf6 .\cf2 ar\cf6 (\cf7 1\cf6 ,\cf2  \cf7 1\cf6 ,\cf2  \cf7 0\cf6 ,\cf2  \cf7 100\cf6 );\cf2 \
@@ -67,33 +144,27 @@ d = \cf5 SynthDef\cf6 (\cf11 \\bufferFade\cf6 ,\cf2  \cf6 \{\cf2 \
 		\cf6 \}\cf2 \
 	\cf6 );\cf2 \
 	\cf5 BufWr\cf6 .\cf2 ar\cf6 (\cf2 sig\cf6 ,\cf2  \cf4 ~out\cf6 .\cf2 bufnum\cf6 ,\cf2  phase\cf6 );\cf2 \
-\cf6 \}).\cf2 add\cf6 ;\
-\cf2 d.draw\
+\cf6 \}).\cf2 add\cf6 ;\cf2 \
+d\cf6 .\cf2 draw\
 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 n\cf6 .\cf2 free\cf6 ;\cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 n = \cf5 Synth\cf6 (\cf11 \\bufferFade\cf6 );\cf2 \
+n\cf6 .\cf2 free\cf6 ;\cf2 \
+n = \cf5 Synth\cf6 (\cf11 \\bufferFade\cf6 );\cf2 \
 n\cf6 .\cf2 inspect\
 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf4 ~bufInterpolate\cf2  = \cf6 \{\cf2 \
 	\cf8 | pos = 0, buffers, func, width = 1 |\cf2 \
 	\cf8 var\cf2  adjusted\cf6 ,\cf2  adjustedFloor\cf6 ,\cf2  xfade\cf6 ;\cf2 \
 	\cf8 var\cf2  oddSig\cf6 ,\cf2  oddBuffer\cf6 ,\cf2  evenSig\cf6 ,\cf2  evenBuffer\cf6 ,\cf2  sig\cf6 ;\cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 	\cf8 var\cf2  oddFunc = \cf6 (\cf5 _\cf2  % \cf7 2\cf6 ).\cf2 round\cf6 (\cf7 1\cf6 );\cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 	\
+	\cf8 var\cf2  oddFunc = \cf6 (\cf5 _\cf2  % \cf7 2\cf6 ).\cf2 round\cf6 (\cf7 1\cf6 );\cf2 \
+	\
 	if \cf6 (\cf2 buffers\cf6 .\cf2 size > \cf7 1\cf6 )\cf2  \
 	\cf6 \{\cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 		adjusted = pos * \cf6 (\cf2 buffers\cf6 .\cf2 size - \cf7 1\cf6 );\cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 		adjustedFloor = adjusted\cf6 .\cf2 floor\cf6 ;\cf2 \
+		adjusted = pos * \cf6 (\cf2 buffers\cf6 .\cf2 size - \cf7 1\cf6 );\cf2 \
+		adjustedFloor = adjusted\cf6 .\cf2 floor\cf6 ;\cf2 \
 		\
 		xfade = adjusted - adjustedFloor\cf6 ;\cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 		\
+		\
 		buffers\cf6 .\cf2 postln\cf6 ;\cf2 \
 		oddBuffer = \cf5 Select\cf6 .\cf2 kr\cf6 (\cf2 \
 			oddFunc\cf6 .(\cf2 adjustedFloor\cf6 ).\cf2 if\cf6 (\cf2 adjustedFloor\cf6 ,\cf2  adjustedFloor + \cf7 1\cf6 ),\cf2  \
@@ -102,8 +173,7 @@ n\cf6 .\cf2 inspect\
 			oddFunc\cf6 .(\cf2 adjustedFloor\cf6 ).\cf2 not\cf6 .\cf2 if\cf6 (\cf2 adjustedFloor\cf6 ,\cf2  adjustedFloor + \cf7 1\cf6 ),\cf2  \
 			buffers\cf6 );\cf2 \
 		\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 		oddSig = func\cf6 .\cf2 value\cf6 (\cf2 oddBuffer\cf6 );\cf2 \
+		oddSig = func\cf6 .\cf2 value\cf6 (\cf2 oddBuffer\cf6 );\cf2 \
 		evenSig = func\cf6 .\cf2 value\cf6 (\cf2 evenBuffer\cf6 );\cf2 \
 		\
 		xfade = oddFunc\cf6 .(\cf2 adjustedFloor\cf6 ).\cf2 if\cf6 (\cf7 1 \cf2 - \cf6 x\cf2 fade\cf6 ,\cf2  xfade\cf6 );\cf2 \
@@ -114,6 +184,7 @@ n\cf6 .\cf2 inspect\
 	\cf6 \};\cf2 \
 	\
 	sig\cf6 ;\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf6 \};\cf2 \
 \
 \
