@@ -1,7 +1,8 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf320
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf470
 {\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green102\blue0;\red77\green77\blue77;
-\red0\green0\blue179;\red128\green0\blue0;\red0\green0\blue255;\red179\green0\blue179;\red255\green102\blue0;
+\red0\green0\blue178;\red128\green0\blue0;\red0\green0\blue255;\red178\green0\blue178;\red255\green102\blue0;
+\red51\green51\blue191;\red0\green0\blue178;\red77\green77\blue77;\red128\green0\blue0;\red178\green0\blue178;
 \red51\green51\blue191;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
@@ -20,7 +21,7 @@
 \
 \cf4 (\cf2 \
 	\cf5 SynthDef\cf4 (\cf6 \\click\cf4 ,\cf2  \cf4 \{\cf2 \
-		\cf7 | out=0, amp=0.5, repeats=0.1, freq=0, tail=0.1, ampIn=0.001, ampOut=0.2 |\cf2 \
+		\cf7 | out=0, amp=0.5, repeats=0.1, freq=20, tail=0.1, ampIn=0.001, ampOut=0.2 |\cf2 \
 		\cf7 var\cf2  trueDur\cf4 ,\cf2  sig\cf4 ,\cf2  combedSig\cf4 ,\cf2  delays\cf4 ,\cf2  klankSet\cf4 ,\cf2  \
 			high\cf4 ,\cf2  highFreqs\cf4 ,\cf2  highMods\cf4 ;\cf2 \
 		\
@@ -52,25 +53,24 @@
 		\cf5 DetectSilence\cf4 .\cf2 ar\cf4 (\cf2  sig\cf4 ,\cf2  \cf8 -60\cf4 .\cf2 dbamp\cf4 ,\cf2  doneAction:\cf8 2 \cf4 );\cf2 \
 		sig = sig\cf4 .\cf2 tanh\cf4 ;\cf2 \
 		\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
+		\cf3 //////////////////////////////////////////////////////////////////////////\cf2 \
 		\cf3 // high\cf2 \
-		high = \cf5 HPF\cf4 .\cf2 ar\cf4 (\cf2 sig\cf4 ,\cf2  \cf8 9000\cf4 );\cf2 \
+		high = \cf5 HPF\cf4 .\cf2 ar\cf4 (\cf2 sig\cf4 ,\cf2  \cf8 17000\cf4 );\cf2 \
 		high = \cf5 LeakDC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 );\cf2 \
-		highFreqs = \cf4 [\cf8 80\cf4 ,\cf2  \cf8 84\cf4 ,\cf2  \cf8 89\cf4 ,\cf2  \cf8 96\cf4 ].\cf2 midicps\
-			+ \cf4 \{\cf2  \cf5 SinOsc\cf4 .\cf2 ar\cf4 (\cf8 0.2 \cf2 * \cf8 0.2\cf4 .\cf2 rand\cf4 ).\cf2 range\cf4 (\cf8 -10\cf4 ,\cf8 10\cf4 )\cf2  \cf4 \}\cf2  ! \cf8 4\cf4 ;\cf2 \
-		highFreqs = highFreqs\cf4 .\cf2 reciprocal\cf4 ;\cf2 \
-		high = \cf5 CombC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 ,\cf2  \cf8 0.2\cf4 ,\cf2  \cf0 highFreqs\cf4 ,\cf2  \cf8 2.8\cf4 );\cf2 \
-		high = \cf5 LPF\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 ,\cf2  \cf0 highFreqs. * 2);\
-		high = high.sum;\cf2 \
+		highFreqs = \cf4 ([\cf8 80\cf4 ,\cf2  \cf8 84\cf4 ,\cf2  \cf8 89\cf4 ,\cf2  \cf8 96\cf4 ].\cf2 midicps + \cf8 10\cf4 )\cf2 \
+			+ \cf4 \{\cf2  \cf5 SinOsc\cf4 .\cf2 ar\cf4 (\cf8 0.1 \cf2 * \cf8 0.1\cf4 .\cf2 rand\cf4 ).\cf2 range\cf4 (\cf8 -10\cf4 ,\cf8 10\cf4 )\cf2  \cf4 \}\cf2  ! \cf8 4\cf4 ;\cf2 \
+		high = \cf5 CombC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 ,\cf2  \cf8 0.2\cf4 ,\cf2  highFreqs\cf4 .\cf2 reciprocal\cf4 ,\cf2  \cf8 22.8\cf4 );\cf2 \
+		high = \cf5 DelayC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 ,\cf2  \cf8 0.4\cf4 ,\cf2  \cf4 \{\cf2  \cf8 0.1\cf4 .\cf2 rand + \cf8 0.01 \cf4 \});\cf2 \
+		high = \cf5 LPF\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 ,\cf2  max\cf4 (\cf8 20\cf4 ,\cf2  min\cf4 (\cf8 16000\cf4 ,\cf2  highFreqs * \cf8 0.5\cf4 )));\cf2 \
+		high = high\cf4 .\cf2 sum\cf4 ;\cf2 \
 		high = \cf5 LeakDC\cf4 .\cf2 ar\cf4 (\cf2 high\cf4 );\cf2 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf2 		sig = high\cf4 ;\cf2 \
+		sig = sig + high\cf4 ;\cf2 \
 		\
-		\cf5 Out\cf4 .\cf2 ar\cf4 (\cf2  out\cf4 ,\cf2  sig \cf4 );\cf2 \
+		\cf5 Out\cf4 .\cf2 ar\cf4 (\cf2  out\cf4 ,\cf2  sig*\cf8 0.1 \cf4 );\cf2 \
 	\cf4 \}).\cf2 add\cf4 ;\cf2 \
 \cf4 )\cf2 \
 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf9 ~b_1\cf2  = \cf5 Buffer\cf4 .\cf2 alloc\cf4 (\cf2  s\cf4 ,\cf2  \cf8 513\cf4 );\cf2 \
 \cf9 ~s_1\cf2  = \cf5 Signal\cf4 .\cf2 newClear\cf4 (\cf2  \cf8 513 \cf4 );\cf2 \
 \
@@ -88,24 +88,43 @@ e = \cf5 SCEnvelopeEdit\cf4 (\cf2  w\cf4 ,\cf2  w\cf4 .\cf2 view\cf4 .\cf2 bound
 	\cf6 \\freq\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 	\cf5 Pseq\cf4 ([\cf8 30\cf4 ],\cf8 1\cf4 ),\cf2 		\cf8 0\cf4 ,\cf2 		\cf8 0 \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
 	\cf6 \\repeats\cf4 ,\cf2 	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 		\cf8 3\cf4 ,\cf2 		\cf8 1\cf4 ,\cf2 		\cf8 1\cf2 	\cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
 	\cf6 \\tail\cf4 ,\cf2  \cf9 ~tail\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf4 )\cf2 \
 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf9 ~a\cf2  = \cf5 Pbind\cf4 (\cf2 \
 	\cf6 \\instrument\cf4 ,\cf2  \cf6 \\click\cf4 ,\cf2 \
-	\cf6 \\dur\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 0.15\cf4 ,\cf2  	\cf8 0.15\cf4 ,\cf2 	\cf8 0.15\cf4 ,\cf2 	\cf8 0.15\cf4 ,\cf2  \cf8 8       \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
+	\cf6 \\dur\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 0.15\cf4 ,\cf2  	\cf8 0.15\cf4 ,\cf2 	 	\cf8 0.15\cf4 ,\cf2 		\cf8 0.15\cf4 ,\cf2  \cf8 8       \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
 	\cf6 \\amp\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 0.05\cf4 ,\cf2  	\cf8 0.05\cf4 ,\cf2  	\cf8 0.25\cf4 ,\cf2  	\cf8 0.75\cf4 ,\cf2  \cf8 0.05  \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
 	\cf6 \\freq\cf4 ,\cf2  	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 	 \cf5 Pseq\cf4 ([\cf8 30\cf4 ],\cf8 1\cf4 ),\cf2       \cf8 1\cf4 ,\cf2 	\cf8 10\cf4 ,\cf2     \cf8 40     \cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
 	\cf6 \\repeats\cf4 ,\cf2 	\cf5 Pseq\cf4 ([\cf2 	\cf8 1\cf4 ,\cf2 		\cf8 3\cf4 ,\cf2 		\cf8 1\cf4 ,\cf2 		\cf8 1\cf2 	\cf4 ],\cf2  \cf10 inf\cf4 ),\cf2 \
 	\cf6 \\tail\cf4 ,\cf2  \cf9 ~tail\cf2 \
-\cf4 )\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf4 )\
 \
-\cf9 ~a\cf4 .\cf2 play\cf4 ;\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf9 ~a\cf0  = \cf11 Pbind\cf12 (\cf0 \
+	\cf13 \\instrument\cf12 ,\cf0  \cf13 \\click\cf12 ,\cf0 \
+	\cf13 \\dur\cf12 ,\cf0  	\cf11 Pseq\cf12 ([\cf0 	\cf14 5       \cf12 ],\cf0  \cf15 inf\cf12 ),\cf0 \
+	\cf13 \\amp\cf12 ,\cf0  	\cf11 Pseq\cf12 ([\cf0 	\cf14 0.05\cf12 ,\cf0  	\cf14 0.05\cf12 ,\cf0  	\cf14 0.25\cf12 ,\cf0  	\cf14 0.75\cf12 ,\cf0  \cf14 0.05  \cf12 ],\cf0  \cf15 inf\cf12 ),\cf0 \
+	\cf13 \\freq\cf12 ,\cf0  	\cf11 Pseq\cf12 ([\cf0 	\cf14 1\cf12 ,\cf0 	 \cf11 Pseq\cf12 ([\cf14 30\cf12 ],\cf14 1\cf12 ),\cf0       \cf14 1\cf12 ,\cf0 	\cf14 10\cf12 ,\cf0     \cf14 40     \cf12 ],\cf0  \cf15 inf\cf12 ),\cf0 \
+	\cf13 \\repeats\cf12 ,\cf0 	\cf11 Pseq\cf12 ([\cf0 	\cf14 1\cf12 ,\cf0 		\cf14 7\cf12 ,\cf0 		\cf14 1\cf12 ,\cf0 		\cf14 1\cf0 	\cf12 ],\cf0  \cf15 inf\cf12 ),\cf0 \
+	\cf13 \\tail\cf12 ,\cf0  \cf9 ~tail\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf12 )\cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf9 ~a\cf4 .\cf2 stop\cf4 ;\cf2 \
 \
 \cf9 ~klank1\cf2  = \cf4 \{\cf2 \
 	\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf4 \}\cf2 \
 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf9 ~b\cf2  = \cf4 \{\cf2 \
 	\cf9 ~a\cf4 .\cf2 ar !\cf8 2\cf4 ;\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf4 \};\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 \cf9 ~b\cf4 .\cf2 play\cf4 ;}
