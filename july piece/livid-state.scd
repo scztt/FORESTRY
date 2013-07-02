@@ -1,0 +1,7 @@
+/////////////////////////////////////////////////////////////////
+// LIVID STATE MACHINE
+
+t = State(\test);
+t.stopActions.add({
+	"stopping".postln;
+});
