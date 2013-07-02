@@ -1,19 +1,40 @@
-MultiStateManager {
+MultiStateManager : Singleton {
 	var <states, <currentState;
 
+	init {
+	}
+
+	switch {
+		arg state ...args;
+		if (currentState != state) {
+			if (currentState.notNil) {
+				currentState.doStop(*args);
+			};
+			currentState = nil;
+
+			if (state.notNil) {
+				state.doStart(*args);
+			};
+			currentState = state;
+		}
+	}
 }
 
 State : Singleton {
 	var <initialized=false, <running = false;
 	var <initActions, <startActions, <stopActions, <freeActions, <resources;
-	var envir;
+	var envir, name;
 
 	init {
+		arg inName;
 		initActions = SparseArray();
 		startActions = SparseArray();
 		stopActions = SparseArray();
 		freeActions = SparseArray();
 		resources = SparseArray();
+		envir = Environment();
+		envir[\name] = inName;
+		name = inName;
 
 		this.clear();
 	}
@@ -23,12 +44,20 @@ State : Singleton {
 		^envir.at(selector);
 	}
 
+	put {
+		arg key, value;
+		^envir.put(key, value);
+	}
+
 	clear {
 		initActions.clear(8);
 		startActions.clear(8);
 		stopActions.clear(8);
 		freeActions.clear(8);
 		resources.clear(8);
+
+		envir.clear();
+		envir[\name] = name;
 	}
 
 	doInit {
@@ -36,9 +65,11 @@ State : Singleton {
 		initActions.do({
 			arg action;
 			try {
-				action.value(*args);
+				envir.use({
+					action.value(*args)
+				});
 			} {
-				"Error running action %".format(action).error;
+				"%: Error running action %".format(this.name(), action).error;
 			}
 		});
 		initialized = true;
@@ -51,9 +82,11 @@ State : Singleton {
 			startActions.do({
 				arg action;
 				try {
-					action.value(*args);
+					envir.use({
+						action.value(*args)
+					});
 				} {
-					"Error running action %".format(action).error;
+					"%: Error running action %".format(this.name(), action).error;
 				}
 			});
 			running = true;
@@ -69,9 +102,11 @@ State : Singleton {
 			stopActions.do({
 				arg action;
 				try {
-					action.value(*args);
+					envir.use({
+						action.value(*args)
+					});
 				} {
-					"Error running action %".format(action).error;
+					"%: Error running action %".format(this.name(), action).error;
 				}
 			});
 			running = false;
@@ -86,9 +121,11 @@ State : Singleton {
 		freeActions.do({
 			arg action;
 			try {
-				action.value(*args);
+				envir.use({
+					action.value(*args)
+				});
 			} {
-				"Error running action %".format(action).error;
+				"%: Error running action %".format(this.name(), action).error;
 			}
 		});
 		resources.do({

@@ -8,7 +8,7 @@ Singleton {
 	*new {
 		arg name = \default;
     		^all.atFail(name, {
-			var newSingleton = this.createNew().init();
+			var newSingleton = this.createNew().init(name);
 			all[name] = newSingleton;
 			newSingleton;
 		});
