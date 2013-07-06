@@ -23,7 +23,7 @@ MultiStateManager : Singleton {
 State : Singleton {
 	var <initialized=false, <running = false;
 	var <initActions, <startActions, <stopActions, <freeActions, <resources;
-	var envir, name;
+	var envir, <name;
 
 	init {
 		arg inName;
@@ -37,6 +37,12 @@ State : Singleton {
 		name = inName;
 
 		this.clear();
+	}
+
+	onError {
+		|e|
+		"%: Error running action %.".format(this.name()).error;
+		e.postln;
 	}
 
 	at {
@@ -60,6 +66,11 @@ State : Singleton {
 		envir[\name] = name;
 	}
 
+	use {
+		arg func;
+		envir.use(func);
+	}
+
 	doInit {
 		arg ...args;
 		initActions.do({
@@ -69,8 +80,9 @@ State : Singleton {
 					action.value(*args)
 				});
 			} {
-				"%: Error running action %".format(this.name(), action).error;
-			}
+				|e|
+				this.onError(e)
+			};
 		});
 		initialized = true;
 		this.update(\initialized, true);
@@ -86,8 +98,9 @@ State : Singleton {
 						action.value(*args)
 					});
 				} {
-					"%: Error running action %".format(this.name(), action).error;
-				}
+					|e|
+					this.onError(e)
+				};
 			});
 			running = true;
 			this.update(\running, true);
@@ -106,8 +119,9 @@ State : Singleton {
 						action.value(*args)
 					});
 				} {
-					"%: Error running action %".format(this.name(), action).error;
-				}
+					|e|
+					this.onError(e)
+				};
 			});
 			running = false;
 			this.update(\running, false);
@@ -125,8 +139,9 @@ State : Singleton {
 					action.value(*args)
 				});
 			} {
-				"%: Error running action %".format(this.name(), action).error;
-			}
+				|e|
+				this.onError(e)
+			};
 		});
 		resources.do({
 			arg resource;
